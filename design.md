@@ -1,5 +1,4 @@
 Design for Fold V 2.0
-#fold #racket
 
 1. Read a single word from the stream. It should not have whitespace, punctuation, or caps. Breaks in text should be marked.
 2. Hold a map from LHS centers to their boxes. This is the center map.
@@ -44,4 +43,6 @@ Design for Fold V 2.0
                 1. If this search exceeds trie depth, load this new depth from raw - slow but amortized
                 2. Check in the phrase trie to see if each phrase along connection axis + new word on RHS is in trie. Filter on this.
             6. Any boxes that pass checks should be packed into result and returned in a list
+
+Idea: Use convert each word to a symbol when it is read in
 
