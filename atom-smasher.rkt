@@ -5,7 +5,7 @@
 
 (struct res (a b c d) #:transparent)
 (struct box (data center diagonals) #:transparent)
-(provide smash-and-grab calculate-center box)
+(provide make-boxes calculate-center box)
 
 (define (calculate-center b)
   (map car (box-data b)))
@@ -58,7 +58,7 @@
 (module+ test
   (require rackunit)
   (check-equal?
-   (smash-and-grab "d"
+   (make-boxes "d"
                    #hash(("a" . (set "b" "c")) ("b" . (set "c" "d")) ("c" . (set "d" "b")) ("d" . (set "a")))
                    #hash(("a" . (set "d")) ("b" . (set "a" "c")) ("c" . (set "a" "b")) ("d" . (set "b" "c"))))
    (set
@@ -71,7 +71,7 @@
      '("b" "d")
      (list (set "a") (set "b" "c") (set "d"))))))
 
-(define (smash-and-grab word next prev)
+(define (make-boxes word next prev)
   (list->set (set-map (smash word next prev) grab)))
 
 ; a b

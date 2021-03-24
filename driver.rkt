@@ -6,7 +6,7 @@
 (define (drive s prev cur)
   (define new-next (hash-update (state-next s) prev (λ (s) (set-add s cur)) (set)))
   (define new-prev (hash-update (state-prev s) cur (λ (s) (set-add s prev)) (set)))
-  (define boxes (set-union (state-boxes s) (smash-and-grab cur new-next new-prev)))
+  (define boxes (set-union (state-boxes s) (make-boxes cur new-next new-prev)))
   (define new-centers (for/fold ([centers (state-centers s)])
                                 ([box boxes])
                         (hash-update centers (calculate-center box) (λ (s) (set-add s box)) (set))))
