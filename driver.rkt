@@ -2,6 +2,7 @@
 
 (require "atom-smasher.rkt" pfds/deque/bankers suffixtree)
 (struct state (centers next prev boxes phrases raw increment) #:transparent)
+(provide state drive)
 
 (define (drive s cur)
   (define prev (last (state-raw s)))
