@@ -1,11 +1,10 @@
 #lang racket
-;(require suffixtree)
-;(define tree (make-tree))
-;(tree-add! tree (vector->label/with-sentinel (list->vector (list "a" "b" "c"))))
-;(tree-contains? tree (vector->label (list->vector (list "a"))))
+(require suffixtree)
+(define tree (make-tree))
+(tree-add! tree (vector->label/with-sentinel (list->vector (list "a" "b" "c"))))
+(tree-contains? tree (vector->label (list->vector (list "a"))))
 
-(require pfds/queue/bankers)
+(require pfds/deque/bankers)
 
-
-
-(queue->list (enqueue 10 (queue 4 5 6)))
+(last (enqueue 2 (enqueue 1 (deque))))
+(deque->list (enqueue 2 (enqueue 1 (deque))))
