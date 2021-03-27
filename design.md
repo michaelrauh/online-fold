@@ -1,14 +1,21 @@
 Design for Fold V 2.0
 
-1. Read a single word from the stream. It should not have whitespace, punctuation, or caps. Breaks in text should be marked.
-2. Hold a map from LHS centers to their boxes. This is the center map.
-    1. LHS centers is the whole box except for the right hand colum
-    2. RHS centers is the whole box except for the left hand column
+1. Read a single word from the stream. Remove punctuation and caps. Mark any new paragraphs as a break and ensure there is only one break in a row.
+2. Make the initial state object
+    1. Center map - LHS center to boxes
+        1. LHS center is all but the right column
+    2. next map - map from word to set of following word
+    3. previous map - map from word to set of previous word
+    4. boxes - all previously found boxes mapped from dimensions to set of box.
+        1. boxes are compound structures holding an array of arrays with the text of the overlaps contained, the RHS center and diagonals.
+            1. diagonals is a list of set. Each set contains the words at index distance from top left corner.
+    5. phrases - a suffix tree with every phrase seen so far.
+    5. raw - all words since the last break. Start is a break. Ideally this is a queue for fast addition to the end.
+    6. increment - the new boxes that have not been sifted yet. Set of boxes.
 3. Fold that word into a list of new “atoms” (2x2 boxes) and update indices.
-    1. Pass the new word and the previous word. If this tuple has been passed or contains a text break, skip.
-    2. Also pass a map from word to set of words that come after. Also pass the opposite of this map. 
-    3. The word will be in the bottom left of any new 2x2 box created
-    4. search for a new box looks like: d <- c <- a -> b -> d’
+    1. Pass the new word and previous state. empty out raw if there has been a break, and seed it with the first word post-break. Empty out increment. A concept of a safe driver could help here.
+    2. The word will be in the bottom left of any new 2x2 box created
+    3. search for a new box looks like: d <- c <- a -> b -> d’
         1. <- means find LHS in back map and return all elements of set
         2. -> means find LHS in forward map and return all elements of set
         3. “Searching” for these things means finding the cross product of all of these sets. 
@@ -18,10 +25,10 @@ Design for Fold V 2.0
             2. RHS centers and
             3. current diagonal buckets (list of set indexed by distance from top left. This is hard coded at this dim to [{“a”}, {“b”, “c”} {“d”}]
         6. Return list of results
-    5. Add word to forward and back edges
-    6. Add word to phrase trie to depth = max discovered depth. Don’t add phrases with breaks.
-    7. Add word to raw, a list of strings containing breaks to be read into the phrase trie later.
-    8. Update center map with result boxes. (half of the centers will be in a map and the other half will be in metadata for fast asymmetric lookup)
+    5. Add word to next and prev maps
+    6. Add word to the end of raw.
+    6. Add raw to phrase suffix tree.
+    8. Update center map with result boxes.
 4. Ask the scheduler for required next shape. Feed one box in to this. Each box in the list will hit the scheduler in a loop until failure.
     1. If the new shape is up a dimension (all twos) then trigger an up dimension transform
         1. Up dimension transforms will always act upon all-two boxes. (base dimension boxes) 
@@ -44,5 +51,5 @@ Design for Fold V 2.0
                 2. Check in the phrase trie to see if each phrase along connection axis + new word on RHS is in trie. Filter on this.
             6. Any boxes that pass checks should be packed into result and returned in a list
 
-Idea: Use convert each word to a symbol when it is read in
+Idea: Use symbols instead of strings
 

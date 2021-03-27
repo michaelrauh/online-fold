@@ -1,10 +1,11 @@
 #lang racket
 
 (require "atom-smasher.rkt" trie)
-(struct state (centers next prev boxes phrases raw) #:transparent)
+(struct state (centers next prev boxes phrases raw increment) #:transparent)
 
-(define (drive s cur)
-  (define prev (car (state-raw s)))
+(define (drive s cur phrase-length)
+  (define prev (first (state-raw s)))
+  (define new-raw (cons cur (state-raw s)))
   (define new-next (hash-update (state-next s) prev (λ (s) (set-add s cur)) (set)))
   (define new-prev (hash-update (state-prev s) cur (λ (s) (set-add s prev)) (set)))
   (define boxes (set-union (state-boxes s) (make-boxes cur new-next new-prev)))
@@ -12,21 +13,22 @@
                                 ([box boxes])
                         (hash-update centers (calculate-center box) (λ (s) (set-add s box)) (set))))
   (define new-boxes (set-union (state-boxes s) boxes))
-  (define new-phrases (trie-add-item! (state-phrases s) (list prev cur)))
-  (define new-raw (cons cur (state-raw s)))
-  (state new-centers new-next new-prev new-boxes new-phrases new-raw))
+  (define new-phrases (for/fold ([phrases (state-phrases s)])
+                                ([phrase (map reverse (map (λ (pos) (take new-raw pos)) (range 2 (add1 phrase-length))))])
+                        (trie-add-item! phrases phrase)))
+  (state new-centers new-next new-prev new-boxes new-phrases new-raw boxes))
 
 (module+ test
   (require rackunit)
-  (check-equal? (drive (state #hash() #hash() #hash() (set) (make-trie-root) '("b")) "d")
-                (state #hash() (hash "b" (set "d")) (hash "d" (set "b")) (set) (trie-add-item! (make-trie-root) '("b" "d")) '("d" "b")))
+  (check-equal? (drive (state #hash() #hash() #hash() (set) (make-trie-root) (list "b") (set)) "d" 2)
+                (state #hash() (hash "b" (set "d")) (hash "d" (set "b")) (set) (trie-add-item! (make-trie-root) '("b" "d")) '("d" "b") (set)))
 
   (define next #hash(("a" . (set "b" "c")) ("b" . (set "c")) ("c" . (set "d" "b")) ("d" . (set "a"))))
   (define prev #hash(("a" . (set "d")) ("b" . (set "a" "c")) ("c" . (set "a" "b")) ("d" . (set "c"))))
   (check-equal? (drive (state #hash() next prev (set)
                               (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (make-trie-root) '("a" "b")) '("b" "c")) '("c" "d")) '("d" "a")) '("a" "c")) '("c" "b"))
-                              '("b" "c" "a" "d" "c" "b" "a"))
-                       "d")
+                              '("b" "c" "a" "d" "c" "b" "a") (set))
+                       "d" 2)
                 (state
                  (hash
                   '("a" "b") ; a b c d a c b d
@@ -57,12 +59,21 @@
                   (box
                    '(("a" "c") ("b" "d"))
                    '("c" "d")
-                   (list (set "a") (set "b" "c") (set "d")))) (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (make-trie-root) '("a" "b")) '("b" "c")) '("c" "d")) '("d" "a")) '("a" "c")) '("c" "b")) '("b" "d")) '("d" "b" "c" "a" "d" "c" "b" "a"))))
+                   (list (set "a") (set "b" "c") (set "d"))))
+                 (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (trie-add-item! (make-trie-root) '("a" "b")) '("b" "c")) '("c" "d")) '("d" "a")) '("a" "c")) '("c" "b")) '("b" "d"))
+                 '("d" "b" "c" "a" "d" "c" "b" "a")
+                 (set
+                  (box
+                   '(("a" "b") ("c" "d"))
+                   '("b" "d")
+                   (list (set "a") (set "b" "c") (set "d")))
+                  (box
+                   '(("a" "c") ("b" "d"))
+                   '("c" "d")
+                   (list (set "a") (set "b" "c") (set "d")))))))
 
-; TODO consider removing redundant data by getting rid of set of boxes in favor of using values from centers
-; TODO check on performance of returning trie instead of accepting that it is mutating
 ; TODO find some way to make it clear that phrases gets mutated in drive
-; TODO add depth tracking so that phrases can go as deep as necessary instead of assuming a depth of two
-; TODO add text break handling
-; TODO update design to show that drive must be seeded with the first word in raw but can take one word at a time after that
-; TODO decide on best way to return new boxes. Perhaps that requires a separate entry in state
+; TODO Replace trie with suffix tree
+; TODO Replace raw with a queue
+; TODO make a caller to drive that handles clearing raw and seeding with new data when there is a text break
+; TODO stop passing phrase length
