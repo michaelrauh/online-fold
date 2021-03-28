@@ -2,20 +2,30 @@
 
 (require "atom-smasher.rkt" pfds/deque/bankers suffixtree)
 (struct state (centers next prev boxes phrases raw increment) #:transparent)
-(provide state drive)
+(provide state drive state? state-centers state-next state-prev state-boxes state-phrases state-raw state-increment)
 
 (define (drive s cur)
+  (displayln "one")
   (define prev (last (state-raw s)))
+  (displayln "two")
   (define new-raw (enqueue cur (state-raw s)))
+  (displayln "three")
   (define new-phrases (state-phrases s))
-  (tree-add! new-phrases (vector->label/with-sentinel (list->vector (deque->list new-raw))))
+  (displayln "four")
+  (tree-add! new-phrases (vector->label/with-sentinel (list->vector (deque->list new-raw)))) ; this line is slow
+  (displayln "five")
   (define new-next (hash-update (state-next s) prev (λ (s) (set-add s cur)) (set)))
+  (displayln "six")
   (define new-prev (hash-update (state-prev s) cur (λ (s) (set-add s prev)) (set)))
+  (displayln "seven")
   (define boxes (set-union (state-boxes s) (make-boxes cur new-next new-prev)))
+  (displayln "eight")
   (define new-centers (for/fold ([centers (state-centers s)])
                                 ([box boxes])
                         (hash-update centers (calculate-center box) (λ (s) (set-add s box)) (set))))
+  (displayln "nine")
   (define new-boxes (set-union (state-boxes s) boxes))
+  (displayln "ten")
   (state new-centers new-next new-prev new-boxes new-phrases new-raw boxes))
 
 ; TODO stop mutating phrases
@@ -72,3 +82,6 @@
     '(("a" "c") ("b" "d"))
     '("c" "d")
     (list (set "a") (set "b" "c") (set "d"))))))
+
+;(require racket/trace)
+;(trace drive)
