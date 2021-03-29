@@ -1,6 +1,6 @@
 Design for Fold V 2.0
 
-1. Read a single word from the stream. Remove punctuation and caps. Mark any new paragraphs as a break and ensure there is only one break in a row.
+1. Read a single word from the stream. Remove punctuation and caps. Double newlines and periods are marked as text breaks.
 2. Make the initial state object
     1. Center map - LHS center to boxes
         1. LHS center is all but the right column

@@ -23,6 +23,7 @@
 ; TODO convert box data and centers from lists to vectors
 ; TODO bring deque back
 ; TODO change to typed racket and use the optimization coach
+; TODO index boxes by dimension
 
 (module+ test
   (require rackunit)
