@@ -25,6 +25,8 @@
 ; TODO make a caller to drive that handles clearing raw and seeding with new data when there is a text break
 ; TODO remove double conversion before adding to phrases
 ; TODO convert box data to and centers from lists to vectors
+; TODO bring deque back
+; TODO change to typed racket
 
 (module+ test
   (require rackunit)
