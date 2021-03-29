@@ -1,22 +1,24 @@
 #lang racket
 
 (require data/monad 
-         data/applicative)
+         data/applicative
+         math)
 
 (struct res (a b c d) #:transparent)
-(struct box (data center diagonals) #:transparent)
-(provide make-boxes calculate-center box)
+(struct ortho (data center diagonals) #:transparent)
+(provide make-boxes calculate-center (struct-out ortho))
 
+; TODO switch centers so that this center is the RHS one.
 (define (calculate-center b)
-  (map car (box-data b)))
+  (array-slice-ref (ortho-data b) (list '(0 1) '(0))))
 
 (module+ test
   (require rackunit)
-  (check-equal? (calculate-center (box
-                                   '(("a" "b") ("c" "d"))
-                                   '("b" "d")
+  (check-equal? (calculate-center (ortho
+                                   (array #[#["a" "b"] #["c" "d"]])
+                                   (array #[#["b"] #["d"]])
                                    (list (set "a") (set "b" "c") (set "d"))))
-                '("a" "c")))
+                (array #[#["a"] #["c"]])))
 
 (define (smash word next prev)
   ; d <- c <- a -> b -> d'
@@ -49,26 +51,30 @@
   (define b (res-b x))
   (define c (res-c x))
   (define d (res-d x))
-  (box (list (list a b) (list c d)) (list b d) (list (set a) (set b c) (set d))))
+  (ortho (array #[#[a b] #[c d]]) (array #[#[b] #[d]]) (list (set a) (set b c) (set d))))
 
 (module+ test
   (require rackunit)
-  (check-equal? (grab (res "a" "b" "c" "d")) (box (list (list "a" "b") (list "c" "d")) (list "b" "d") (list (set "a") (set "b" "c") (set "d")))))
+  (check-equal? (grab (res "a" "b" "c" "d"))
+                (ortho
+                 (array #[#["a" "b"] #["c" "d"]])
+                 (array #[#["b"] #["d"]])
+                 (list (set "a") (set "b" "c") (set "d")))))
 
 (module+ test
   (require rackunit)
   (check-equal?
    (make-boxes "d"
-                   #hash(("a" . (set "b" "c")) ("b" . (set "c" "d")) ("c" . (set "d" "b")) ("d" . (set "a")))
-                   #hash(("a" . (set "d")) ("b" . (set "a" "c")) ("c" . (set "a" "b")) ("d" . (set "b" "c"))))
+               #hash(("a" . (set "b" "c")) ("b" . (set "c" "d")) ("c" . (set "d" "b")) ("d" . (set "a")))
+               #hash(("a" . (set "d")) ("b" . (set "a" "c")) ("c" . (set "a" "b")) ("d" . (set "b" "c"))))
    (set
-    (box
-     '(("a" "c") ("b" "d"))
-     '("c" "d")
+    (ortho
+     (array #[#["a" "c"] #["b" "d"]])
+     (array #[#["c"] #["d"]])
      (list (set "a") (set "b" "c") (set "d")))
-    (box
-     '(("a" "b") ("c" "d"))
-     '("b" "d")
+    (ortho
+     (array #[#["a" "b"] #["c" "d"]])
+     (array #[#["b"] #["d"]])
      (list (set "a") (set "b" "c") (set "d"))))))
 
 (define (make-boxes word next prev)

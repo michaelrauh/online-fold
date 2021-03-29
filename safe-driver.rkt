@@ -1,5 +1,5 @@
 #lang racket
-(require "driver.rkt" 2htdp/batch-io threading suffixtree racket/trace)
+(require "driver.rkt" 2htdp/batch-io threading suffixtree racket/trace math)
 (provide calculate input-strings make-empty-state)
 
 (define (safe-drive s cur)
@@ -8,24 +8,34 @@
     [(empty? (state-raw s)) (state (state-centers s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (append (state-raw s) (list cur)) (set))]
     [else (drive s cur)]))
 
-(define (input-strings)
+(define (input-strings s)
   (~>
-   (read-file "example.txt")
+   s
    (string-replace _ "\n\n" " stringbreakingpoint ")
    (string-replace _ "." " stringbreakingpoint ")
    (string-split)
    (map (λ (s) (string-replace s #px"\\W" "")) _)
    (map string-downcase _)))
 
+(define (input-from-file)
+  (input-strings (read-file "example.txt")))
+
 (define (calculate input-strings state)
   (cond
     [(empty? input-strings) state]
     [else (begin
-            (displayln (car input-strings))
             (define step (safe-drive state (car input-strings)))
             (calculate (cdr input-strings) step))]))
 
 (define (make-empty-state)
-  (state #hash() #hash() #hash() (set) (make-tree) (list) (set)))
+  (state #hash() #hash() #hash() #hash() (make-tree) (list) (set)))
 
-;(calculate (input-strings) (make-empty-state))
+(module+ test
+  (require rackunit)
+  (check-equal? (state-increment (calculate (input-strings "a b c d a c b d") (make-empty-state)))
+                (set (ortho (array #[#["a" "b"] #["c" "d"]]) (array #[#["b"] #["d"]])
+                          (list (set "a") (set "b" "c") (set "d")))
+                     (ortho (array #[#["a" "c"] #["b" "d"]])
+                          (array #[#["c"] #["d"]]) (list (set "a") (set "b" "c") (set "d")))))
+  (check-equal? (state-increment (calculate (input-strings "a b c d a c b d e") (make-empty-state)))
+                (set)))
