@@ -19,11 +19,12 @@
 
 (define (calculate input-strings state)
   (cond
-    [(empty? input-strings) (displayln "done")]
+    [(empty? input-strings) state]
     [else (begin
-            (displayln (car input-strings))
             (define step (safe-drive state (car input-strings)))
             (calculate (cdr input-strings) step))]))
 
 (define (make-empty-state)
   (state #hash() #hash() #hash() (set) (make-tree) (list) (set)))
+
+(calculate (input-strings) (make-empty-state))
