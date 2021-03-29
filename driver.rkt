@@ -8,10 +8,7 @@
   (define prev (last (state-raw s)))
   (define new-raw (append (state-raw s) (list cur)))
   (define new-phrases (state-phrases s))
-  (define deq new-raw)
-  (define vect (list->vector deq))
-  (define lab (vector->label/with-sentinel vect))
-  (tree-add! new-phrases lab)
+  (tree-add! new-phrases (vector->label/with-sentinel (list->vector new-raw)))
   (define new-next (hash-update (state-next s) prev (λ (s) (set-add s cur)) (set)))
   (define new-prev (hash-update (state-prev s) cur (λ (s) (set-add s prev)) (set)))
   (define boxes (set-union (state-boxes s) (make-boxes cur new-next new-prev)))
@@ -22,11 +19,10 @@
   (state new-centers new-next new-prev new-boxes new-phrases new-raw boxes))
 
 ; TODO stop mutating phrases
-; TODO make a caller to drive that handles clearing raw and seeding with new data when there is a text break
 ; TODO remove double conversion before adding to phrases
-; TODO convert box data to and centers from lists to vectors
+; TODO convert box data and centers from lists to vectors
 ; TODO bring deque back
-; TODO change to typed racket
+; TODO change to typed racket and use the optimization coach
 
 (module+ test
   (require rackunit)

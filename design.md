@@ -29,7 +29,7 @@ Design for Fold V 2.0
     6. Add word to the end of raw.
     6. Add raw to phrase suffix tree.
     8. Update center map with result boxes.
-4. Ask the scheduler for required next shape. Feed one box in to this. Each box in the list will hit the scheduler in a loop until failure.
+4. Ask the scheduler for required next shape. Feed one box in to this. Each box in the list will hit the scheduler in a loop until failure. Specifically, each time either a base 2x2 is made, and each time anything is joined, zero or multiple results may occur. If there are zero, return state back. If there are multiple, do a depth first search. Process the first thing as an addition until it comes back and then the second.
     1. If the new shape is up a dimension (all twos) then trigger an up dimension transform
         1. Up dimension transforms will always act upon all-two boxes. (base dimension boxes) 
         2. Start with new input box. and together the set disjoint operation of each diagonal bucket in list with every other box. filter by this.
