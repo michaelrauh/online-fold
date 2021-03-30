@@ -9,9 +9,32 @@
   (map (λ (b) (combine-winners cur b)) selected-candidates))
 
 (define (next-filter next cur candidate)
-  (for/and ([from-word (array->list (array-flatten cur))]
-            [target-word (array->list (array-flatten candidate))])
+  (for/and ([from-word (array->list (array-flatten (ortho-data cur)))]
+            [target-word (array->list (array-flatten (ortho-data candidate)))])
     (set-member? (hash-ref next from-word) target-word)))
+
+(module+ test
+  (require rackunit)
+  (check-true (next-filter
+               #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+               (ortho
+                (array #[#["a" "b"] #["c" "d"]])
+                (array #[#["a"] #["c"]])
+                (list (set "a") (set "b" "c") (set "d")))
+               (ortho
+                (array #[#["e" "f"] #["g" "h"]])
+                (array #[#["e"] #["g"]])
+                (list (set "e") (set "f" "g") (set "h")))))
+  (check-false (next-filter
+               #hash(("a" . (set "b" "c")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+               (ortho
+                (array #[#["a" "b"] #["c" "d"]])
+                (array #[#["a"] #["c"]])
+                (list (set "a") (set "b" "c") (set "d")))
+               (ortho
+                (array #[#["e" "f"] #["g" "h"]])
+                (array #[#["e"] #["g"]])
+                (list (set "e") (set "f" "g") (set "h"))))))
 
 (define (diagonal-filter cur candidate)
   (for/and ([l (cdr (ortho-diagonals cur))]
