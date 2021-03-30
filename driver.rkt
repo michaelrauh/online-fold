@@ -33,17 +33,17 @@
                             '("a" "b" "c" "d" "a" "c" "b") (set)) "d"))
 
   (check-equal? (state-centers res) (hash
-                                     (array #[#["a"] #["b"]])
+                                     (array #[#["c"] #["d"]])
                                      (set
                                       (ortho
                                        (array #[#["a" "c"] #["b" "d"]])
-                                       (array #[#["c"] #["d"]])
+                                       (array #[#["a"] #["b"]])
                                        (list (set "a") (set "b" "c") (set "d"))))
-                                     (array #[#["a"] #["c"]])
+                                     (array #[#["b"] #["d"]])
                                      (set
                                       (ortho
                                        (array #[#["a" "b"] #["c" "d"]])
-                                       (array #[#["b"] #["d"]])
+                                       (array #[#["a"] #["c"]])
                                        (list (set "a") (set "b" "c") (set "d"))))))
   (check-equal? (state-next res) #hash(("a" . (set "b" "c"))
                                        ("b" . ("d" set "c"))
@@ -58,20 +58,20 @@
                                    (set
                                     (ortho
                                      (array #[#["a" "b"] #["c" "d"]])
-                                     (array #[#["b"] #["d"]])
+                                     (array #[#["a"] #["c"]])
                                      (list (set "a") (set "b" "c") (set "d")))
                                     (ortho
                                      (array #[#["a" "c"] #["b" "d"]])
-                                     (array #[#["c"] #["d"]])
+                                     (array #[#["a"] #["b"]])
                                      (list (set "a") (set "b" "c") (set "d"))))))
   (check-true (tree-contains? (state-phrases res) (vector->label (list->vector '("a" "b" "c" "d" "a" "c" "b" "d")))))
   (check-equal? (state-raw res) '("a" "b" "c" "d" "a" "c" "b" "d"))
   (check-equal? (state-increment res) (set
                                        (ortho
                                         (array #[#["a" "b"] #["c" "d"]])
-                                        (array #[#["b"] #["d"]])
+                                        (array #[#["a"] #["c"]])
                                         (list (set "a") (set "b" "c") (set "d")))
                                        (ortho
                                         (array #[#["a" "c"] #["b" "d"]])
-                                        (array #[#["c"] #["d"]])
+                                        (array #[#["a"] #["b"]])
                                         (list (set "a") (set "b" "c") (set "d"))))))

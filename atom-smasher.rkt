@@ -8,17 +8,16 @@
 (struct ortho (data center diagonals) #:transparent)
 (provide make-boxes calculate-center (struct-out ortho))
 
-; TODO switch centers so that this center is the RHS one.
 (define (calculate-center b)
-  (array-slice-ref (ortho-data b) (list '(0 1) '(0))))
+  (array-slice-ref (ortho-data b) (list '(0 1) '(1))))
 
 (module+ test
   (require rackunit)
   (check-equal? (calculate-center (ortho
                                    (array #[#["a" "b"] #["c" "d"]])
-                                   (array #[#["b"] #["d"]])
+                                   (array #[#["a"] #["c"]])
                                    (list (set "a") (set "b" "c") (set "d"))))
-                (array #[#["a"] #["c"]])))
+                (array #[#["b"] #["d"]])))
 
 (define (smash word next prev)
   ; d <- c <- a -> b -> d'
@@ -51,7 +50,7 @@
   (define b (res-b x))
   (define c (res-c x))
   (define d (res-d x))
-  (ortho (array #[#[a b] #[c d]]) (array #[#[b] #[d]]) (list (set a) (set b c) (set d))))
+  (ortho (array #[#[a b] #[c d]]) (array #[#[a] #[c]]) (list (set a) (set b c) (set d))))
 
 (module+ test
   (require rackunit)
@@ -70,11 +69,11 @@
    (set
     (ortho
      (array #[#["a" "c"] #["b" "d"]])
-     (array #[#["c"] #["d"]])
+     (array #[#["a"] #["b"]])
      (list (set "a") (set "b" "c") (set "d")))
     (ortho
      (array #[#["a" "b"] #["c" "d"]])
-     (array #[#["b"] #["d"]])
+     (array #[#["a"] #["c"]])
      (list (set "a") (set "b" "c") (set "d"))))))
 
 (define (make-boxes word next prev)
