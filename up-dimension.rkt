@@ -1,12 +1,29 @@
 #lang racket
 (require "driver.rkt" math)
 
-(define (combine cur s)
-  (define shape (vector->list (array-shape cur)))
-  (define combine-candidates (hash-ref (state-boxes s) shape))
-  (define refined-candidates (filter (λ (b) (next-filter (state-next s) cur b)) combine-candidates))
+(define (combine next boxes cur)
+  (define combine-candidates (hash-ref boxes (vector->list (array-shape (ortho-data cur)))))
+  (define refined-candidates (filter (λ (b) (next-filter next cur b)) (set->list combine-candidates)))
   (define selected-candidates (filter (λ (b) (diagonal-filter cur b)) refined-candidates))
   (map (λ (b) (combine-winners cur b)) selected-candidates))
+
+(module+ test
+  (require rackunit)
+  
+  (check-equal? (combine
+                 #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+                 (hash '(2 2)
+                       (set
+                        (ortho (array #[#["e" "f"] #["g" "h"]]) (array #[#["e"] #["g"]]) (list (set "e") (set "f" "g") (set "h")))
+                        (ortho (array #[#["a" "b"] #["c" "d"]]) (array #[#["a"] #["c"]]) (list (set "a") (set "b" "c") (set "d")))))
+                 (ortho
+                  (array #[#["a" "b"] #["c" "d"]])
+                  (array #[#["a"] #["c"]])
+                  (list (set "a") (set "b" "c") (set "d"))))
+                (list (ortho
+                       (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
+                       (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
+                       (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h"))))))
 
 (define (next-filter next cur candidate)
   (for/and ([from-word (array->list (array-flatten (ortho-data cur)))]
@@ -26,15 +43,15 @@
                 (array #[#["e"] #["g"]])
                 (list (set "e") (set "f" "g") (set "h")))))
   (check-false (next-filter
-               #hash(("a" . (set "b" "c")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
-               (ortho
-                (array #[#["a" "b"] #["c" "d"]])
-                (array #[#["a"] #["c"]])
-                (list (set "a") (set "b" "c") (set "d")))
-               (ortho
-                (array #[#["e" "f"] #["g" "h"]])
-                (array #[#["e"] #["g"]])
-                (list (set "e") (set "f" "g") (set "h"))))))
+                #hash(("a" . (set "b" "c")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+                (ortho
+                 (array #[#["a" "b"] #["c" "d"]])
+                 (array #[#["a"] #["c"]])
+                 (list (set "a") (set "b" "c") (set "d")))
+                (ortho
+                 (array #[#["e" "f"] #["g" "h"]])
+                 (array #[#["e"] #["g"]])
+                 (list (set "e") (set "f" "g") (set "h"))))))
 
 (define (diagonal-filter cur candidate)
   (for/and ([l (cdr (ortho-diagonals cur))]
