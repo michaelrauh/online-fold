@@ -9,13 +9,12 @@
   (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s increment)) (set)))
   (define centers (for/fold ([centers (state-centers s)])
                             ([box increment])
-                    (hash-update centers (calculate-center box new-dims) (λ (s) (set-add s box)) (set))))
+                    (hash-update centers (calculate-foreign-center box new-dims) (λ (s) (set-add s box)) (set))))
   
   (state centers (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
 
 ; assumption - dims are correct
-; TODO rename to make it clear which center this is
-(define (calculate-center box dims)
+(define (calculate-foreign-center box dims)
   (array-slice-ref (ortho-data box) (calculate-center-dims dims)))
 
 (define (calculate-center-dims dims)

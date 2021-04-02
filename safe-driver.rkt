@@ -2,7 +2,7 @@
 (require "driver.rkt" 2htdp/batch-io threading suffixtree racket/trace math)
 (provide calculate input-strings make-empty-state)
 
-; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks.
+; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks. Broken phrases are not desired in output.
 (define (safe-drive s cur)
   (cond
     [(equal? "stringbreakingpoint" cur) (state (state-centers s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (list) (set))]

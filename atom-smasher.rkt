@@ -6,16 +6,15 @@
 
 (struct res (a b c d) #:transparent)
 (struct ortho (data center diagonals) #:transparent)
-(provide make-boxes calculate-center (struct-out ortho))
+(provide make-boxes calculate-foreign-center (struct-out ortho))
 
 ; Assumption: This will only ever be called on an ortho with a 2x2 in it
-; TODO rename to make it clear which center this is
-(define (calculate-center b)
+(define (calculate-foreign-center b)
   (array-slice-ref (ortho-data b) (list '(0 1) '(1))))
 
 (module+ test
   (require rackunit)
-  (check-equal? (calculate-center (ortho
+  (check-equal? (calculate-foreign-center (ortho
                                    (array #[#["a" "b"] #["c" "d"]])
                                    (array #[#["a"] #["c"]])
                                    (list (set "a") (set "b" "c") (set "d"))))
@@ -27,7 +26,7 @@
   (define d word)
   (list->set
    (sequence->list
-    (do [c <- (hash-ref prev d (set))] ; TODO refactor to for*/list
+    (do [c <- (hash-ref prev d (set))]
       [a <- (hash-ref prev c (set))]
       [b <- (hash-ref next a (set))]
       [d-prime <- (hash-ref next b (set))]
@@ -61,7 +60,7 @@
   (check-equal? (grab (res "a" "b" "c" "d"))
                 (ortho
                  (array #[#["a" "b"] #["c" "d"]])
-                 (array #[#["b"] #["d"]])
+                 (array #[#["a"] #["c"]])
                  (list (set "a") (set "b" "c") (set "d")))))
 
 (module+ test

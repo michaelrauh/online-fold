@@ -15,7 +15,7 @@
   (define increment (make-boxes cur new-next new-prev))
   (define new-centers (for/fold ([centers (state-centers s)])
                                 ([box increment])
-                        (hash-update centers (calculate-center box) (λ (s) (set-add s box)) (set))))
+                        (hash-update centers (calculate-foreign-center box) (λ (s) (set-add s box)) (set))))
   (define new-boxes (hash-update (state-boxes s) '(2 2) (λ (s) (set-union s increment)) (set)))
   (state new-centers new-next new-prev new-boxes new-phrases new-raw increment))
 

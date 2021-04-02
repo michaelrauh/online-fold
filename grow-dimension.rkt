@@ -17,7 +17,7 @@
   (define input-shape (array-shape (ortho-data cur)))
   (define target-shape (list-update array-shape (sub1 (length array-shape)) add1))
   (define data (add-to-end (ortho-data cur) (ortho-data other) target-shape))
-  (define center (calculate-center data target-shape))
+  (define center (calculate-local-center data))
   (define diagonal (append (list (car (ortho-diagonals cur))) (map set-union (cdr (ortho-diagonals cur)) (drop-right (ortho-diagonals other) 1)) (list (last (ortho-diagonals other)))))
   (ortho data center diagonal))
 
@@ -38,9 +38,9 @@
   (define words (ortho-data d2))
   (array-reshape (list*->array (map (λ (l r) (append l (list r))) phrases words)) target-shape))
 
-; TODO rename to make it clear which center this is
-(define (calculate-center box dims)
-  (array-slice-ref (ortho-data box) (calculate-center-dims dims)))
+(define (calculate-local-center data)
+  (define dims (array-shape data))
+  (array-slice-ref data (calculate-center-dims dims)))
 
 (define (calculate-center-dims dims)
   (define almost (map (λ (x) (range x)) dims))
