@@ -1,8 +1,70 @@
 #lang racket
 (require "driver.rkt" math)
 
-(define (combine next boxes cur)
-  (define combine-candidates (hash-ref boxes (vector->list (array-shape (ortho-data cur)))))
+(define (drive-up s cur)
+  (define dims (vector->list (array-shape (ortho-data cur))))
+  (define new-dims (cons 2 dims))
+  (define increment (list->set (combine (state-next s) (state-boxes s) cur dims)))
+  (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s increment)) (set)))
+  (define centers (for/fold ([centers (state-centers s)])
+                            ([box increment])
+                    (hash-update centers (calculate-center box new-dims) (λ (s) (set-add s box)) (set))))
+  
+  (state centers (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+
+(define (calculate-center box dims)
+  (array-slice-ref (ortho-data box) (calculate-center-dims dims)))
+
+(define (calculate-center-dims dims)
+  (define almost (map (λ (x) (range x)) dims))
+  (list-update almost (sub1 (length almost)) cdr))
+
+(module+ test
+  (require rackunit)
+  (define start-state (state
+                       #hash()
+                       #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+                       #hash()
+                       (hash '(2 2)
+                             (set
+                              (ortho (array #[#["e" "f"] #["g" "h"]]) (array #[#["e"] #["g"]]) (list (set "e") (set "f" "g") (set "h")))
+                              (ortho (array #[#["a" "b"] #["c" "d"]]) (array #[#["a"] #["c"]]) (list (set "a") (set "b" "c") (set "d")))))
+                       null
+                       null
+                       null))
+  (define end-state (state
+                     (hash
+                      (array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
+                      (set (ortho
+                            (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
+                            (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
+                            (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
+                     #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+                     #hash()
+                     (hash '(2 2)
+                           (set
+                            (ortho (array #[#["e" "f"] #["g" "h"]]) (array #[#["e"] #["g"]]) (list (set "e") (set "f" "g") (set "h")))
+                            (ortho (array #[#["a" "b"] #["c" "d"]]) (array #[#["a"] #["c"]]) (list (set "a") (set "b" "c") (set "d"))))
+                           '(2 2 2)
+                           (set
+                            (ortho
+                             (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
+                             (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
+                             (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
+                     null
+                     null
+                     (set
+                      (ortho
+                       (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
+                       (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
+                       (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h"))))))
+  (check-equal? (drive-up start-state (ortho (array #[#["a" "b"] #["c" "d"]]) (array #[#["a"] #["c"]]) (list (set "a") (set "b" "c") (set "d"))))
+                end-state))
+                       
+                       
+  
+(define (combine next boxes cur dims)
+  (define combine-candidates (hash-ref boxes dims))
   (define refined-candidates (filter (λ (b) (next-filter next cur b)) (set->list combine-candidates)))
   (define selected-candidates (filter (λ (b) (diagonal-filter cur b)) refined-candidates))
   (map (λ (b) (combine-winners cur b)) selected-candidates))
@@ -19,7 +81,8 @@
                  (ortho
                   (array #[#["a" "b"] #["c" "d"]])
                   (array #[#["a"] #["c"]])
-                  (list (set "a") (set "b" "c") (set "d"))))
+                  (list (set "a") (set "b" "c") (set "d")))
+                 '(2 2))
                 (list (ortho
                        (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
                        (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])

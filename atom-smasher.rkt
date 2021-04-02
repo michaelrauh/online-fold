@@ -24,7 +24,7 @@
   (define d word)
   (list->set
    (sequence->list
-    (do [c <- (hash-ref prev d (set))]
+    (do [c <- (hash-ref prev d (set))] ; TODO refactor to for*/list
       [a <- (hash-ref prev c (set))]
       [b <- (hash-ref next a (set))]
       [d-prime <- (hash-ref next b (set))]
