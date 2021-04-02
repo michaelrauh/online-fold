@@ -1,6 +1,7 @@
 #lang racket
 (require "driver.rkt" math suffixtree)
 
+; assumption - cur is to be joined on the minor axis and that rotation is in centers
 (define (combine phrases centers cur)
   (define combine-candidates (hash-ref centers (ortho-center cur)))
   (define selected-candidates (filter (λ (b) (phrase-filter phrases cur b)) (set->list combine-candidates)))
@@ -37,6 +38,7 @@
   (define words (ortho-data d2))
   (array-reshape (list*->array (map (λ (l r) (append l (list r))) phrases words)) target-shape))
 
+; TODO rename to make it clear which center this is
 (define (calculate-center box dims)
   (array-slice-ref (ortho-data box) (calculate-center-dims dims)))
 

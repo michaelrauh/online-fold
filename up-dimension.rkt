@@ -1,6 +1,7 @@
 #lang racket
 (require "driver.rkt" math)
 
+; assumption - input is at lowest volume for dimensionality (all 2s)
 (define (drive-up s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
   (define new-dims (cons 2 dims))
@@ -12,6 +13,8 @@
   
   (state centers (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
 
+; assumption - dims are correct
+; TODO rename to make it clear which center this is
 (define (calculate-center box dims)
   (array-slice-ref (ortho-data box) (calculate-center-dims dims)))
 
@@ -116,6 +119,7 @@
                  (array #[#["e"] #["g"]])
                  (list (set "e") (set "f" "g") (set "h"))))))
 
+; assumption - diagonals are a list of set indexed by distance from top left corner
 (define (diagonal-filter cur candidate)
   (for/and ([l (cdr (ortho-diagonals cur))]
             [r (drop-right (ortho-diagonals candidate) 1)])
@@ -140,6 +144,7 @@
                                  (array #[#["e"] #["g"]])
                                  (list (set "b") (set "f" "g") (set "h"))))))
 
+; assumption - those to be combined are eligible
 (define (combine-winners cur other)
   (define data (list*->array (list (array->list* (ortho-data cur)) (array->list* (ortho-data other))) string?))
   (define center (list*->array (list (array->list* (ortho-center cur)) (array->list* (ortho-center other))) string?))

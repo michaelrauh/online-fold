@@ -2,12 +2,14 @@
 (require "driver.rkt" 2htdp/batch-io threading suffixtree racket/trace math)
 (provide calculate input-strings make-empty-state)
 
+; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks.
 (define (safe-drive s cur)
   (cond
     [(equal? "stringbreakingpoint" cur) (state (state-centers s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (list) (set))]
     [(empty? (state-raw s)) (state (state-centers s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (append (state-raw s) (list cur)) (set))]
     [else (drive s cur)]))
 
+; assumption - double newlines and periods are breaking points. Casing is not important. Punctuation is not important.
 (define (input-strings s)
   (~>
    s

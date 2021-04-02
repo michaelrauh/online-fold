@@ -46,13 +46,14 @@ Design for Fold V 2.0
             1. swap update axis and last axis.
             2. Fix metadata
                 1. diagonal buckets should be orientation independent. Leave that alone.
-                2. Fix the centers. Not sure how to do this. This looks like a full recompute.
-            3. look up the center of the candidate against existing centers. Mapping should be from center to set of boxes with that center.
-            4. filter based upon diagonal buckets 
-            5. Perform the next words check
-                1. Check in the phrase trie to see if each phrase along connection axis + new word on RHS is in trie. Filter on this.
-            6. Any boxes that pass checks should be packed into result and returned in a list
-            7. Once these are combined update state to reflect. There will be entries missing from centers and boxes. Increment should be overwritten with these results. Specifically, the caller or driver of this combine needs to take boxes and frame that as an increment while updating centers and boxes.
+                2. Fix the centers. This is a recompute. Slice all but the last position in the most minor axis.
+            3. Combine the current with the other in the most minor axis.
+                1. look up the center of the candidate against existing centers. Mapping should be from center to set of boxes with that center.
+                2. Perform the next words check
+                    1. Check in the phrase trie to see if each phrase along connection axis + new word on RHS is in trie. Filter on this. Phrases can be found by reshaping the data array to be nbym where m is the size of the most minor axis and n is whatever it needs to be to preserve volume (volume over m)
+                3. Any boxes that pass checks should be packed into result and returned in a list
+                    1. Diagonals can be created from old diagonals. Shift the outers out and set union the inners.
+            4. Once these are combined update state to reflect. There will be entries missing from centers and boxes. Increment should be overwritten with these results. Specifically, the caller or driver of this combine needs to take boxes and frame that as an increment while updating centers and boxes.
 
 Tricky bit: state will change during scheduling. Assume we are doing a depth first search.
 Scenario:

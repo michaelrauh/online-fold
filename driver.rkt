@@ -4,6 +4,7 @@
 (struct state (centers next prev boxes phrases raw increment) #:transparent)
 (provide (struct-out state) (struct-out ortho) drive)
 
+; assumption - raw is nonempty. Only 2x2 are desired. Due to mutable phrase tree this is not designed to be called multithreaded or in an odd order. It is called "first" for each word.
 (define (drive s cur)
   (define prev (last (state-raw s)))
   (define new-raw (append (state-raw s) (list cur)))

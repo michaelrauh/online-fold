@@ -8,6 +8,8 @@
 (struct ortho (data center diagonals) #:transparent)
 (provide make-boxes calculate-center (struct-out ortho))
 
+; Assumption: This will only ever be called on an ortho with a 2x2 in it
+; TODO rename to make it clear which center this is
 (define (calculate-center b)
   (array-slice-ref (ortho-data b) (list '(0 1) '(1))))
 
@@ -19,6 +21,7 @@
                                    (list (set "a") (set "b" "c") (set "d"))))
                 (array #[#["b"] #["d"]])))
 
+; assumption - the latest word passed in is the furthest along in the stream. The stream is being fed in order.
 (define (smash word next prev)
   ; d <- c <- a -> b -> d'
   (define d word)
@@ -45,6 +48,7 @@
                        #hash(("a" . (set "d")) ("b" . (set "a" "c")) ("c" . (set "a" "b")) ("d" . (set "b" "c"))))
                 (set (res "a" "c" "b" "d") (res "a" "b" "c" "d"))))
 
+; assumption - res is well formed
 (define (grab x)
   (define a (res-a x))
   (define b (res-b x))
