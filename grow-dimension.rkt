@@ -2,7 +2,8 @@
 (require "driver.rkt" math suffixtree)
 
 ; assumption - cur is to be joined on the minor axis and that rotation is in centers and up to date with latest known. That is, the rotation expressed in centers
-; includes all representatives of that permutation from boxes.
+; includes all representatives of that permutation from boxes. The only way this can be kept in complete sync is to add all rotations at generation time in the driver.
+; The driver for this combine will need to do all rotations and add all centers, and the same is true for the up-dimension and atom drivers. JIT can be added later.
 (define (combine phrases centers cur)
   (define combine-candidates (hash-ref centers (ortho-center cur)))
   (define selected-candidates (filter (λ (b) (phrase-filter phrases cur b)) (set->list combine-candidates)))
