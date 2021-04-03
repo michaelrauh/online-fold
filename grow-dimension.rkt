@@ -1,7 +1,8 @@
 #lang racket
 (require "driver.rkt" math suffixtree)
 
-; assumption - cur is to be joined on the minor axis and that rotation is in centers
+; assumption - cur is to be joined on the minor axis and that rotation is in centers and up to date with latest known. That is, the rotation expressed in centers
+; includes all representatives of that permutation from boxes.
 (define (combine phrases centers cur)
   (define combine-candidates (hash-ref centers (ortho-center cur)))
   (define selected-candidates (filter (λ (b) (phrase-filter phrases cur b)) (set->list combine-candidates)))
@@ -21,27 +22,44 @@
   (define diagonal (append (list (car (ortho-diagonals cur))) (map set-union (cdr (ortho-diagonals cur)) (drop-right (ortho-diagonals other) 1)) (list (last (ortho-diagonals other)))))
   (ortho data center diagonal))
 
-(define (get-phrases b)
-  (define arr (ortho-data b))
-  (define dims (array-shape arr))
+(define (get-phrases arr)
+  (define dims (vector->list (array-shape arr)))
   (define volume (apply * dims))
   (define phrase-length (last dims))
   (define remaining-volume (/ volume phrase-length))
   (array->list* (array-reshape arr (list->vector (list remaining-volume phrase-length)))))
 
 (define (get-words b)
-  (define phrases (get-phrases (ortho-data b)))
+  (define phrases (get-phrases b))
   (map last phrases))
 
-(define (add-to-end d1 d2 target-shape) ; TODO use vector transforms instead of lists
-  (define phrases (ortho-data d1))
-  (define words (ortho-data d2))
-  (array-reshape (list*->array (map (λ (l r) (append l (list r))) phrases words)) target-shape))
+; TODO calculate target shape more locally or bundle data together
+; TODO eliminate casts
+(define (add-to-end cur b target-shape)
+  (define phrases (get-phrases cur))
+  (define words (get-words b))
+  (define desired-phrases (list*->array (map (λ (l r) (append l (list r))) phrases words) string?))
+  (array-reshape desired-phrases (list->vector target-shape)))
+
+(module+ test
+  (require rackunit)
+  (check-equal?
+   (add-to-end
+    (array #[#["a" "b"] #["c" "d"]])
+    (array #[#["b" "e"] #["d" "f"]])
+    '(2 3))
+   (array #[#["a" "b" "e"] #["c" "d" "f"]])))
 
 (define (calculate-local-center data)
   (define dims (array-shape data))
   (array-slice-ref data (calculate-center-dims dims)))
 
+(module+ test
+  (require rackunit)
+  (check-equal?
+   (calculate-local-center (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]]))
+   (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])))      
+
 (define (calculate-center-dims dims)
-  (define almost (map (λ (x) (range x)) dims))
+  (define almost (map (λ (x) (range x)) (vector->list dims)))
   (list-update almost (sub1 (length almost)) (λ (l) (drop-right l 1))))
