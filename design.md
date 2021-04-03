@@ -13,7 +13,7 @@ Design for Fold V 2.0
     5. phrases - a suffix tree with every phrase seen so far.
     5. raw - all words since the last break. Start is a break. Ideally this is a queue for fast addition to the end.
     6. increment - the new boxes that have not been sifted yet. Set of boxes.
-3. Fold that word into a list of new “atoms” (2x2 boxes) and update indices.
+3. Fold that word into a list of new “atoms” (2x2 boxes) and update indices. This will result in zero or an even number. They occur in pairs to account for rotation.
     1. Pass the new word and previous state. empty out raw if there has been a break, and seed it with the first word post-break. Empty out increment. A concept of a safe driver could help here.
     2. The word will be in the bottom left of any new 2x2 box created
     3. search for a new box looks like: d <- c <- a -> b -> d’
@@ -40,20 +40,17 @@ Design for Fold V 2.0
             2. Put the centers into a bigger array in order.
             3. Put data into a bigger array in order.
         5. Once these are combined update state to reflect. There will be entries missing from centers and boxes. Increment should be overwritten with these results. Specifically, the caller or driver of this combine needs to take boxes and frame that as an increment while updating centers and boxes.
+        6. Update state to include all rotations of the new centers and boxes.
     2. If the new shape is to expand a dimension then trigger an extend transform
-        1. Dig around in the previously found shapes to find one that is off by one. 
-        2. Move the digit that is off by one to be on the most minor axis. This is the trickiest part with the most performance concern. There are also severe space complexity concerns here as this could duplicate data n-fold where n=number of dimensions. These building blocks are not canonical and so can’t be strongly cached. If they are to be cached you would need to always compare against canonical and update. hash the dimension map and if it has not changed, don’t do this. If it has changed, only add the ones that are new.
-            1. swap update axis and last axis.
-            2. Fix metadata
-                1. diagonal buckets should be orientation independent. Leave that alone.
-                2. Fix the centers. This is a recompute. Slice all but the last position in the most minor axis.
+        1. The building blocks of the new thing will be something of the same dims but the minor dim will be one less. The transform increments the most minor dimension. 
             3. Combine the current with the other in the most minor axis.
-                1. look up the center of the candidate against existing centers. Mapping should be from center to set of boxes with that center.
+                1. look up the center of the candidate against existing centers.
                 2. Perform the next words check
-                    1. Check in the phrase trie to see if each phrase along connection axis + new word on RHS is in trie. Filter on this. Phrases can be found by reshaping the data array to be nbym where m is the size of the most minor axis and n is whatever it needs to be to preserve volume (volume over m)
+                    1. Check in the phrase tree to see if each phrase along connection axis + new word on RHS is in the tree. Filter on this. Phrases can be found by reshaping the data array to be nbym where m is the size of the most minor axis and n is whatever it needs to be to preserve volume (volume over m)
                 3. Any boxes that pass checks should be packed into result and returned in a list
                     1. Diagonals can be created from old diagonals. Shift the outers out and set union the inners.
             4. Once these are combined update state to reflect. There will be entries missing from centers and boxes. Increment should be overwritten with these results. Specifically, the caller or driver of this combine needs to take boxes and frame that as an increment while updating centers and boxes.
+            5. Add in all rotations of boxes and centers.
 
 Tricky bit: state will change during scheduling. Assume we are doing a depth first search.
 Scenario:
