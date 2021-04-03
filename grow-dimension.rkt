@@ -16,11 +16,30 @@
 
 (define (combine-winners cur other)
   (define input-shape (array-shape (ortho-data cur)))
-  (define target-shape (list-update array-shape (sub1 (length array-shape)) add1))
+  (define target-shape (list-update (vector->list input-shape) (sub1 (length (vector->list input-shape))) add1))
   (define data (add-to-end (ortho-data cur) (ortho-data other) target-shape))
   (define center (calculate-local-center data))
   (define diagonal (append (list (car (ortho-diagonals cur))) (map set-union (cdr (ortho-diagonals cur)) (drop-right (ortho-diagonals other) 1)) (list (last (ortho-diagonals other)))))
   (ortho data center diagonal))
+
+(module+ test
+  (require rackunit)
+  (check-equal?
+   (combine-winners (ortho
+                     (array #[#["a" "b"] #["c" "d"]])
+                     (array #[#["a"] #["c"]])
+                     (list (set "a") (set "b" "c") (set "d")))
+                    (ortho
+                     (array #[#["b" "e"] #["d" "f"]])
+                     (array #[#["b"] #["d"]])
+                     (list (set "b") (set "e" "d") (set "f"))))
+   (ortho
+    (array #[#["a" "b" "e"] #["c" "d" "f"]])
+    (array #[#["a" "b"] #["c" "d"]])
+    (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
+
+; a b e
+; c d f
 
 (define (get-phrases arr)
   (define dims (vector->list (array-shape arr)))
