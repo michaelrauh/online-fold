@@ -1,13 +1,105 @@
 #lang racket
 (require "driver.rkt" math suffixtree)
 
-; assumption - cur is to be joined on the minor axis and that rotation is in centers and up to date with latest known. That is, the rotation expressed in centers
-; includes all representatives of that permutation from boxes. The only way this can be kept in complete sync is to add all rotations at generation time in the driver.
-; The driver for this combine will need to do all rotations and add all centers, and the same is true for the up-dimension and atom drivers. JIT can be added later.
+; TODO - add all rotations when making an increment
+(define (drive-in s cur)
+  (define dims (vector->list (array-shape (ortho-data cur))))
+  (define increment (combine (state-phrases s) (state-centers s) cur))
+  (define centers (for/fold ([centers (state-centers s)])
+                            ([box increment])
+                    (hash-update centers (calculate-foreign-lhs-center box) (λ (s) (set-add s box)) (set))))
+  (define new-dims (list-update dims (sub1 (length dims)) add1))
+  (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s (list->set increment))) (set)))
+  (state centers (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+
+(module+ test
+  (require rackunit)
+  (define phrases-three (make-tree))
+  (tree-add! phrases-three (vector->label/with-sentinel (list->vector (list "a" "b" "e"))))
+  (tree-add! phrases-three (vector->label/with-sentinel (list->vector (list "c" "d" "f"))))
+  (check-equal? (drive-in (state
+                           (hash (array #[#["b"] #["d"]])
+                                 (set
+                                  (ortho
+                                   (array #[#["b" "e"] #["d" "f"]])
+                                   (array #[#["e"] #["f"]])
+                                   (list (set "b") (set "e" "d") (set "f")))))
+                           null
+                           null
+                           #hash()
+                           phrases-three
+                           null
+                           null)
+                          (ortho
+                           (array #[#["a" "b"] #["c" "d"]])
+                           (array #[#["b"] #["d"]])
+                           (list (set "a") (set "b" "c") (set "d"))))
+                (state
+                 (hash
+                  (array #[#["a" "b"] #["c" "d"]])
+                  (set
+                   (ortho
+                    (array #[#["a" "b" "e"] #["c" "d" "f"]])
+                    (array #[#["b" "e"] #["d" "f"]])
+                    (list (set "a") (set "b" "c") (set "d" "e") (set "f"))))
+                  (array #[#["b"] #["d"]])
+                  (set
+                   (ortho
+                    (array #[#["b" "e"] #["d" "f"]])
+                    (array #[#["e"] #["f"]])
+                    (list (set "b") (set "d" "e") (set "f")))))
+                 null
+                 null
+                 (hash
+                  '(2 3)
+                  (set
+                   (ortho
+                    (array #[#["a" "b" "e"] #["c" "d" "f"]])
+                    (array #[#["b" "e"] #["d" "f"]])
+                    (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
+                 phrases-three
+                 null
+                 (set
+                  (ortho
+                   (array #[#["a" "b" "e"] #["c" "d" "f"]])
+                   (array #[#["b" "e"] #["d" "f"]])
+                   (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))))
+
+(define (calculate-center-dims-foreign dims)
+  (define almost (map (λ (x) (range x)) (vector->list dims)))
+  (list-update almost (sub1 (length almost)) (λ (l) (drop-right l 1))))
+
+(define (calculate-foreign-lhs-center box)
+  (define dims (array-shape (ortho-data box)))
+  (array-slice-ref (ortho-data box) (calculate-center-dims-foreign dims)))
+
+; assumption - cur is to be joined on the minor axis and that rotation is in centers and up to date with latest known.
 (define (combine phrases centers cur)
   (define combine-candidates (hash-ref centers (ortho-center cur)))
-  (define selected-candidates (filter (λ (b) (phrase-filter phrases cur b)) (set->list combine-candidates)))
+  (define selected-candidates (filter (λ (b) (phrase-filter phrases (ortho-data cur) (ortho-data b))) (set->list combine-candidates)))
   (map (λ (b) (combine-winners cur b)) selected-candidates))
+
+(module+ test
+  (require rackunit)
+  (define phrases (make-tree))
+  (tree-add! phrases (vector->label/with-sentinel (list->vector (list "a" "b" "e"))))
+  (tree-add! phrases (vector->label/with-sentinel (list->vector (list "c" "d" "f"))))
+  (check-equal?
+   (combine phrases (hash (array #[#["b"] #["d"]])
+                          (set
+                           (ortho
+                            (array #[#["b" "e"] #["d" "f"]])
+                            (array #[#["e"] #["f"]])
+                            (list (set "b") (set "e" "d") (set "f")))))
+            (ortho
+             (array #[#["a" "b"] #["c" "d"]])
+             (array #[#["b"] #["d"]])
+             (list (set "a") (set "b" "c") (set "d"))))
+   (list
+    (ortho
+     (array #[#["a" "b" "e"] #["c" "d" "f"]])
+     (array #[#["b" "e"] #["d" "f"]])
+     (list (set "a") (set "b" "c") (set "d" "e") (set "f"))))))
 
 (define (phrase-filter phrases cur b)
   (define lhs-phrases (get-phrases cur))
@@ -15,11 +107,25 @@
   (define desired-phrases (map (λ (l r) (append l (list r))) lhs-phrases rhs-words))
   (andmap (λ (p) (tree-contains? phrases (vector->label (list->vector p)))) desired-phrases))
 
+(module+ test
+  (require rackunit)
+  (define phrases-two (make-tree))
+  (tree-add! phrases-two (vector->label/with-sentinel (list->vector (list "a" "b" "e"))))
+  (tree-add! phrases-two (vector->label/with-sentinel (list->vector (list "c" "d" "f"))))
+  (check-true
+   (phrase-filter phrases-two
+                  (array #[#["a" "b"] #["c" "d"]])
+                  (array #[#["b" "e"] #["d" "f"]])))
+  (check-false
+   (phrase-filter phrases-two
+                  (array #[#["a" "b"] #["c" "d"]])
+                  (array #[#["b" "x"] #["d" "f"]]))))
+
 (define (combine-winners cur other)
   (define input-shape (array-shape (ortho-data cur)))
   (define target-shape (list-update (vector->list input-shape) (sub1 (length (vector->list input-shape))) add1))
   (define data (add-to-end (ortho-data cur) (ortho-data other) target-shape))
-  (define center (calculate-local-center data))
+  (define center (calculate-rhs-local-center data))
   (define diagonal (append (list (car (ortho-diagonals cur))) (map set-union (cdr (ortho-diagonals cur)) (drop-right (ortho-diagonals other) 1)) (list (last (ortho-diagonals other)))))
   (ortho data center diagonal))
 
@@ -28,16 +134,19 @@
   (check-equal?
    (combine-winners (ortho
                      (array #[#["a" "b"] #["c" "d"]])
-                     (array #[#["a"] #["c"]])
+                     (array #[#["b"] #["d"]])
                      (list (set "a") (set "b" "c") (set "d")))
                     (ortho
                      (array #[#["b" "e"] #["d" "f"]])
-                     (array #[#["b"] #["d"]])
+                     (array #[#["e"] #["f"]])
                      (list (set "b") (set "e" "d") (set "f"))))
    (ortho
     (array #[#["a" "b" "e"] #["c" "d" "f"]])
-    (array #[#["a" "b"] #["c" "d"]])
+    (array #[#["b" "e"] #["d" "f"]])
     (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
+
+; a b  b e
+; c d  d f
 
 ; a b e
 ; c d f
@@ -70,16 +179,16 @@
     '(2 3))
    (array #[#["a" "b" "e"] #["c" "d" "f"]])))
 
-(define (calculate-local-center data)
+(define (calculate-rhs-local-center data)
   (define dims (array-shape data))
   (array-slice-ref data (calculate-center-dims dims)))
 
 (module+ test
   (require rackunit)
   (check-equal?
-   (calculate-local-center (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]]))
-   (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])))      
+   (calculate-rhs-local-center (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]]))
+   (array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])))      
 
 (define (calculate-center-dims dims)
   (define almost (map (λ (x) (range x)) (vector->list dims)))
-  (list-update almost (sub1 (length almost)) (λ (l) (drop-right l 1))))
+  (list-update almost (sub1 (length almost)) cdr))

@@ -35,9 +35,12 @@
 (module+ test
   (require rackunit)
   (check-equal? (state-increment (calculate (input-strings "a b c d a c b d") (make-empty-state)))
-                (set (ortho (array #[#["a" "b"] #["c" "d"]]) (array #[#["b"] #["d"]])
-                          (list (set "a") (set "b" "c") (set "d")))
+                (set (ortho
+                      (array #[#["a" "b"] #["c" "d"]])
+                      (array #[#["b"] #["d"]])
+                      (list (set "a") (set "b" "c") (set "d")))
                      (ortho (array #[#["a" "c"] #["b" "d"]])
-                          (array #[#["c"] #["d"]]) (list (set "a") (set "b" "c") (set "d")))))
+                            (array #[#["c"] #["d"]])
+                            (list (set "a") (set "b" "c") (set "d")))))
   (check-equal? (state-increment (calculate (input-strings "a b c d a c b d e") (make-empty-state)))
                 (set)))

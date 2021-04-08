@@ -2,14 +2,14 @@ Design for Fold V 2.0
 
 1. Read a single word from the stream. Remove punctuation and caps. Double newlines and periods are marked as text breaks.
 2. Make the initial state object
-    1. Center map - RHS center to boxes
-        1. RHS center is all but the left column
+    1. Center map - LHS center to boxes
+        1. LHS center is all but the right column
     2. next map - map from word to set of following word
     3. previous map - map from word to set of previous word
     4. boxes - all previously found boxes mapped from dimensions to set of box.
-        1. boxes are compound structures holding an array of arrays with the text of the overlaps contained, the LHS center and diagonals.
+        1. boxes are compound structures holding an array of arrays with the text of the overlaps contained, the RHS center (local center as the "new" box is considered to be joining from the left) and diagonals.
             1. diagonals is a list of set. Each set contains the words at index distance from top left corner.
-            2. LHS center is all but the right column.
+            2. RHS center is all but the left column.
     5. phrases - a suffix tree with every phrase seen so far.
     5. raw - all words since the last break. Start is a break. Ideally this is a queue for fast addition to the end.
     6. increment - the new boxes that have not been sifted yet. Set of boxes.
@@ -30,7 +30,7 @@ Design for Fold V 2.0
     6. Add word to the end of raw.
     6. Add raw to phrase suffix tree.
     8. Update center map with result boxes.
-4. Ask the scheduler for required next shape. Feed one box in to this. Each box in the list will hit the scheduler in a loop until failure. Specifically, each time either a base 2x2 is made, and each time anything is joined, zero or multiple results may occur. If there are zero, return state back. If there are multiple, do a depth first search. Process the first thing as an addition until it comes back and then the second.
+4. Hold an empty stack of pairs. Half of the pair is the ortho that has been found and the other is the current state of the scheduler. When a new box is found push it on and push scheduler state. Proceed by popping the top, asking the scheduler what is next and attempting that join. With this approach, the first 2x2 will beget higher shapes that can be returned to, and the scheduler will resume but not assume that higher blockers are there as they may move. Note: this scheduler does not yet exist. It will be based off of the rosette recursion scheme but must be refactored to take in a state and a result and return a next step.
     1. If the new shape is up a dimension (all twos) then trigger an up dimension transform
         1. Up dimension transforms will always act upon all-two boxes. (base dimension boxes)
         2. Start with new input box and check to make sure that each member of the box is a member of the forward map set. (andmap forward box contains other)
@@ -51,24 +51,3 @@ Design for Fold V 2.0
                     1. Diagonals can be created from old diagonals. Shift the outers out and set union the inners.
             4. Once these are combined update state to reflect. There will be entries missing from centers and boxes. Increment should be overwritten with these results. Specifically, the caller or driver of this combine needs to take boxes and frame that as an increment while updating centers and boxes.
             5. Add in all rotations of boxes and centers.
-
-Tricky bit: state will change during scheduling. Assume we are doing a depth first search.
-Scenario:
-1. word -> [first2x2, second2x2]
-2. first2x2 -> [first3x2, second3x2]  ; when a 2x2 is hit, depth first on expanding current dim, take the result and plug it into an up dim jump
-3. first3x2 -> []
-4. second3x2 -> []
-5. first2x2 -> [first2x2x2]
-6. first2x2x2 -> []
-
-Eliminate plan and convert it to a series of questions.
-1. Take in a word and make a list of 2x2. Call with first 2x2 and recursive call with tail.
-2. Take in a 2x2. Call to expand first dim to failure. Get result. Pass that to get the second dim. Get result. Attempt to expand to the next dimension. Once that fails return state. This is three separate calls on the same increment. The difference is that with each call increment stays the same but state changes and scheduler has a new ceiling.
-3. Expand first dim call - linear recursion to find and return.
-4. Expand second dim call - linear recursion but with a ceiling to find and return.
-5. Expand to next dimension call - begins an n-ary forking process with a ceiling.
-
-Takeaway: the current scheduler as implemented in rosette fold will work so long as search order is reversed to search from right to left instead of left to right. Scheduler holds state and that state comes along for each box.
-When one box succeeds to the next level or fails for the next level that reflects only on its own level of recursion. The takeaway is that a new interface for the scheduler is needed. At a top level it needs some ability to take in a success or a failure for its current step and return the next step.
-Right now the scheduler takes nothing in at the top level but passes around a plan and a history. It needs to be rewritten such that it takes in a success or failure flag and returns the next step. It will also need to take in scheduler state which is a plan and a history and perhaps a stage.
-

@@ -15,7 +15,7 @@
   (define increment (make-boxes cur new-next new-prev))
   (define new-centers (for/fold ([centers (state-centers s)])
                                 ([box increment])
-                        (hash-update centers (calculate-foreign-center box) (λ (s) (set-add s box)) (set))))
+                        (hash-update centers (calculate-lhs-foreign-center box) (λ (s) (set-add s box)) (set))))
   (define new-boxes (hash-update (state-boxes s) '(2 2) (λ (s) (set-union s increment)) (set)))
   (state new-centers new-next new-prev new-boxes new-phrases new-raw increment))
 
@@ -34,17 +34,17 @@
                             '("a" "b" "c" "d" "a" "c" "b") (set)) "d"))
 
   (check-equal? (state-centers res) (hash
-                                     (array #[#["c"] #["d"]])
+                                     (array #[#["a"] #["b"]])
                                      (set
                                       (ortho
                                        (array #[#["a" "c"] #["b" "d"]])
-                                       (array #[#["a"] #["b"]])
+                                       (array #[#["c"] #["d"]])
                                        (list (set "a") (set "b" "c") (set "d"))))
-                                     (array #[#["b"] #["d"]])
+                                     (array #[#["a"] #["c"]])
                                      (set
                                       (ortho
                                        (array #[#["a" "b"] #["c" "d"]])
-                                       (array #[#["a"] #["c"]])
+                                       (array #[#["b"] #["d"]])
                                        (list (set "a") (set "b" "c") (set "d"))))))
   (check-equal? (state-next res) #hash(("a" . (set "b" "c"))
                                        ("b" . ("d" set "c"))
@@ -59,20 +59,20 @@
                                    (set
                                     (ortho
                                      (array #[#["a" "b"] #["c" "d"]])
-                                     (array #[#["a"] #["c"]])
+                                     (array #[#["b"] #["d"]])
                                      (list (set "a") (set "b" "c") (set "d")))
                                     (ortho
                                      (array #[#["a" "c"] #["b" "d"]])
-                                     (array #[#["a"] #["b"]])
+                                     (array #[#["c"] #["d"]])
                                      (list (set "a") (set "b" "c") (set "d"))))))
   (check-true (tree-contains? (state-phrases res) (vector->label (list->vector '("a" "b" "c" "d" "a" "c" "b" "d")))))
   (check-equal? (state-raw res) '("a" "b" "c" "d" "a" "c" "b" "d"))
   (check-equal? (state-increment res) (set
                                        (ortho
                                         (array #[#["a" "b"] #["c" "d"]])
-                                        (array #[#["a"] #["c"]])
+                                        (array #[#["b"] #["d"]])
                                         (list (set "a") (set "b" "c") (set "d")))
                                        (ortho
                                         (array #[#["a" "c"] #["b" "d"]])
-                                        (array #[#["a"] #["b"]])
+                                        (array #[#["c"] #["d"]])
                                         (list (set "a") (set "b" "c") (set "d"))))))
