@@ -2,11 +2,10 @@
 (require "driver.rkt" math)
 
 ; assumption - input is at lowest volume for dimensionality (all 2s)
-; TODO - add all rotations when making an increment
 (define (drive-up s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
   (define new-dims (cons 2 dims))
-  (define increment (list->set (combine (state-next s) (state-boxes s) cur dims)))
+  (define increment (list->set (apply append (map rotations (combine (state-next s) (state-boxes s) cur dims)))))
   (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s increment)) (set)))
   (define centers (for/fold ([centers (state-centers s)])
                             ([box increment])
@@ -21,6 +20,28 @@
 (define (calculate-center-dims dims)
   (define almost (map (λ (x) (range x)) dims))
   (list-update almost (sub1 (length almost)) (λ (l) (drop-right l 1))))
+
+(define (rotations o)
+  (define arr-to-ortho ((curry r2o) o))
+  (define arrs (rots (ortho-data o)))
+  (cons o (map arr-to-ortho arrs)))
+
+(define (calculate-rhs-local-center data)
+  (define dims (array-shape data))
+  (array-slice-ref data (calculate-center-local-dims dims)))
+
+(define (calculate-center-local-dims dims)
+  (define almost (map (λ (x) (range x)) (vector->list dims)))
+  (list-update almost (sub1 (length almost)) cdr))
+
+(define (r2o o arr)
+  (ortho arr (calculate-rhs-local-center arr) (ortho-diagonals o)))
+  
+(define (rots arr)
+  (define dims (array-dims arr))
+  (map (λ (ax)
+         (array-axis-swap arr (sub1 dims) ax))
+       (range (sub1 dims))))
 
 (module+ test
   (require rackunit)
@@ -47,34 +68,70 @@
                 (state
                  (hash
                   (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
-                  (set (ortho
-                        (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
-                        (array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
-                        (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
-                 #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
-                 #hash()
-                 (hash '(2 2)
-                       (set
-                        (ortho
-                         (array #[#["e" "f"] #["g" "h"]])
-                         (array #[#["f"] #["h"]])
-                         (list (set "e") (set "f" "g") (set "h")))
-                        (ortho
-                         (array #[#["a" "b"] #["c" "d"]])
-                         (array #[#["b"] #["d"]])
-                         (list (set "a") (set "b" "c") (set "d"))))
-                       '(2 2 2)
-                       (set
-                        (ortho
-                         (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
-                         (array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
-                         (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
-                 null
-                 null
+                  (set
+                   (ortho
+                    (mutable-array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
+                    (mutable-array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
+                    (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h"))))
+                  (array #[#[#["a"] #["c"]] #[#["b"] #["d"]]])
+                  (set
+                   (ortho
+                    (array #[#[#["a" "e"] #["c" "g"]] #[#["b" "f"] #["d" "h"]]])
+                    (array #[#[#["e"] #["g"]] #[#["f"] #["h"]]])
+                    (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h"))))
+                  (array #[#[#["a"] #["b"]] #[#["e"] #["f"]]])
+                  (set
+                   (ortho
+                    (array #[#[#["a" "c"] #["b" "d"]] #[#["e" "g"] #["f" "h"]]])
+                    (array #[#[#["c"] #["d"]] #[#["g"] #["h"]]])
+                    (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
+                 '#hash(("a" . (set "b" "c" "e"))
+                        ("b" . (set "d" "f"))
+                        ("c" . (set "d" "g"))
+                        ("d" . (set "h"))
+                        ("e" . (set "f" "g"))
+                        ("f" . (set "h"))
+                        ("g" . (set "h")))
+                 '#hash()
+                 (hash
+                  '(2 2)
+                  (set
+                   (ortho
+                    (array #[#["e" "f"] #["g" "h"]])
+                    (array #[#["f"] #["h"]])
+                    (list (set "e") (set "f" "g") (set "h")))
+                   (ortho
+                    (array #[#["a" "b"] #["c" "d"]])
+                    (array #[#["b"] #["d"]])
+                    (list (set "a") (set "b" "c") (set "d"))))
+                  '(2 2 2)
+                  (set
+                   (ortho
+                    (mutable-array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
+                    (mutable-array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
+                    (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))
+                   (ortho
+                    (array #[#[#["a" "e"] #["c" "g"]] #[#["b" "f"] #["d" "h"]]])
+                    (array #[#[#["e"] #["g"]] #[#["f"] #["h"]]])
+                    (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))
+                   (ortho
+                    (array #[#[#["a" "c"] #["b" "d"]] #[#["e" "g"] #["f" "h"]]])
+                    (array #[#[#["c"] #["d"]] #[#["g"] #["h"]]])
+                    (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
+                 '()
+                 '()
                  (set
                   (ortho
-                   (array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
-                   (array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
+                   (mutable-array #[#[#["a" "b"] #["c" "d"]] #[#["e" "f"] #["g" "h"]]])
+                   (mutable-array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
+                   (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))
+                  (ortho
+                   (array #[#[#["a" "e"] #["c" "g"]] #[#["b" "f"] #["d" "h"]]])
+                   (array #[#[#["e"] #["g"]] #[#["f"] #["h"]]])
+                   (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))
+                  (ortho
+                   (array #[#[#["a" "c"] #["b" "d"]] #[#["e" "g"] #["f" "h"]]])
+                   (array #[#[#["c"] #["d"]] #[#["g"] #["h"]]])
                    (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))))
                        
                        

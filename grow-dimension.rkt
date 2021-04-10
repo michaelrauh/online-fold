@@ -1,16 +1,35 @@
 #lang racket
 (require "driver.rkt" math suffixtree)
 
-; TODO - add all rotations when making an increment
 (define (drive-in s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
-  (define increment (combine (state-phrases s) (state-centers s) cur))
+  (define increment (apply append (map rotations (combine (state-phrases s) (state-centers s) cur))))
   (define centers (for/fold ([centers (state-centers s)])
                             ([box increment])
                     (hash-update centers (calculate-foreign-lhs-center box) (λ (s) (set-add s box)) (set))))
   (define new-dims (list-update dims (sub1 (length dims)) add1))
   (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s (list->set increment))) (set)))
   (state centers (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+
+(define (rotations o)
+  (define arr-to-ortho ((curry r2o) o))
+  (define arrs (rots (ortho-data o)))
+  (cons o (map arr-to-ortho arrs)))
+
+(define (calculate-center-local-dims dims)
+  (define almost (map (λ (x) (range x)) (vector->list dims)))
+  (list-update almost (sub1 (length almost)) cdr))
+
+(define (r2o o arr)
+  (ortho arr (calculate-rhs-local-center arr) (ortho-diagonals o)))
+  
+(define (rots arr)
+  (define dims (array-dims arr))
+  (map (λ (ax)
+         (array-axis-swap arr (sub1 dims) ax))
+       (range (sub1 dims))))
+
+
 
 (module+ test
   (require rackunit)
@@ -35,35 +54,49 @@
                            (array #[#["b"] #["d"]])
                            (list (set "a") (set "b" "c") (set "d"))))
                 (state
-                 (hash
-                  (array #[#["a" "b"] #["c" "d"]])
-                  (set
-                   (ortho
-                    (array #[#["a" "b" "e"] #["c" "d" "f"]])
-                    (array #[#["b" "e"] #["d" "f"]])
-                    (list (set "a") (set "b" "c") (set "d" "e") (set "f"))))
-                  (array #[#["b"] #["d"]])
-                  (set
-                   (ortho
-                    (array #[#["b" "e"] #["d" "f"]])
-                    (array #[#["e"] #["f"]])
-                    (list (set "b") (set "d" "e") (set "f")))))
-                 null
-                 null
-                 (hash
-                  '(2 3)
-                  (set
-                   (ortho
-                    (array #[#["a" "b" "e"] #["c" "d" "f"]])
-                    (array #[#["b" "e"] #["d" "f"]])
-                    (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
-                 phrases-three
-                 null
-                 (set
-                  (ortho
-                   (array #[#["a" "b" "e"] #["c" "d" "f"]])
-                   (array #[#["b" "e"] #["d" "f"]])
-                   (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))))
+   (hash
+    (array #[#["a"] #["b"] #["e"]])
+    (set
+     (ortho
+      (array #[#["a" "c"] #["b" "d"] #["e" "f"]])
+      (array #[#["c"] #["d"] #["f"]])
+      (list (set "a") (set "b" "c") (set "d" "e") (set "f"))))
+    (array #[#["a" "b"] #["c" "d"]])
+    (set
+     (ortho
+      (mutable-array #[#["a" "b" "e"] #["c" "d" "f"]])
+      (array #[#["b" "e"] #["d" "f"]])
+      (list (set "a") (set "b" "c") (set "d" "e") (set "f"))))
+    (array #[#["b"] #["d"]])
+    (set
+     (ortho
+      (array #[#["b" "e"] #["d" "f"]])
+      (array #[#["e"] #["f"]])
+      (list (set "b") (set "d" "e") (set "f")))))
+   '()
+   '()
+   (hash
+    '(2 3)
+    (set
+     (ortho
+      (array #[#["a" "c"] #["b" "d"] #["e" "f"]])
+      (array #[#["c"] #["d"] #["f"]])
+      (list (set "a") (set "b" "c") (set "d" "e") (set "f")))
+     (ortho
+      (mutable-array #[#["a" "b" "e"] #["c" "d" "f"]])
+      (array #[#["b" "e"] #["d" "f"]])
+      (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
+   phrases-three
+   '()
+   (set
+    (ortho
+     (array #[#["a" "c"] #["b" "d"] #["e" "f"]])
+     (array #[#["c"] #["d"] #["f"]])
+     (list (set "a") (set "b" "c") (set "d" "e") (set "f")))
+    (ortho
+     (mutable-array #[#["a" "b" "e"] #["c" "d" "f"]])
+     (array #[#["b" "e"] #["d" "f"]])
+     (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))))
 
 (define (calculate-center-dims-foreign dims)
   (define almost (map (λ (x) (range x)) (vector->list dims)))

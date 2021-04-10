@@ -40,7 +40,7 @@ Design for Fold V 2.0
             2. Put the centers into a bigger array in order.
             3. Put data into a bigger array in order.
         5. Once these are combined update state to reflect. There will be entries missing from centers and boxes. Increment should be overwritten with these results. Specifically, the caller or driver of this combine needs to take boxes and frame that as an increment while updating centers and boxes.
-        6. Update state to include all rotations of the new centers and boxes.
+        6. Update state to include all rotations of the new centers and boxes. All rotations mean all top left corner (or all diagonal) preserving rotations. In particular, swap the minor axis with every other one.
     2. If the new shape is to expand a dimension then trigger an extend transform
         1. The building blocks of the new thing will be something of the same dims but the minor dim will be one less. The transform increments the most minor dimension. 
             3. Combine the current with the other in the most minor axis.
