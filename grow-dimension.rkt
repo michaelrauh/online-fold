@@ -1,15 +1,24 @@
 #lang racket
-(require "driver.rkt" math suffixtree)
+(require "driver.rkt" math suffixtree racket/trace)
 
 (define (drive-in s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
-  (define increment (apply append (map rotations (combine (state-phrases s) (state-centers s) cur))))
+  (define increment (make-increment s cur))
   (define centers (for/fold ([centers (state-centers s)])
                             ([box increment])
                     (hash-update centers (calculate-foreign-lhs-center box) (λ (s) (set-add s box)) (set))))
   (define new-dims (list-update dims (sub1 (length dims)) add1))
-  (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s (list->set increment))) (set)))
+  (define boxes (make-boxes increment s))
   (state centers (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+(provide drive-in)
+
+(define (make-increment s cur)
+  (apply append (map rotations (combine (state-phrases s) (state-centers s) cur))))
+
+(define (make-boxes increment s)
+  (for/fold ([boxes (state-boxes s)])
+            ([box increment])
+    (hash-update boxes (vector->list (array-shape (ortho-data box))) (λ (s) (set-union s (set box))) (set))))
 
 (define (rotations o)
   (define arr-to-ortho ((curry r2o) o))
@@ -28,8 +37,6 @@
   (map (λ (ax)
          (array-axis-swap arr (sub1 dims) ax))
        (range (sub1 dims))))
-
-
 
 (module+ test
   (require rackunit)
@@ -76,12 +83,14 @@
    '()
    '()
    (hash
-    '(2 3)
+    '(3 2)
     (set
      (ortho
       (array #[#["a" "c"] #["b" "d"] #["e" "f"]])
       (array #[#["c"] #["d"] #["f"]])
-      (list (set "a") (set "b" "c") (set "d" "e") (set "f")))
+      (list (set "a") (set "b" "c") (set "d" "e") (set "f"))))
+    '(2 3)
+    (set
      (ortho
       (mutable-array #[#["a" "b" "e"] #["c" "d" "f"]])
       (array #[#["b" "e"] #["d" "f"]])
@@ -108,7 +117,7 @@
 
 ; assumption - cur is to be joined on the minor axis and that rotation is in centers and up to date with latest known.
 (define (combine phrases centers cur)
-  (define combine-candidates (hash-ref centers (ortho-center cur)))
+  (define combine-candidates (hash-ref centers (ortho-center cur) (set)))
   (define selected-candidates (filter (λ (b) (phrase-filter phrases (ortho-data cur) (ortho-data b))) (set->list combine-candidates)))
   (map (λ (b) (combine-winners cur b)) selected-candidates))
 

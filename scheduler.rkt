@@ -27,5 +27,7 @@
   (define-values (resp2 sched4) (sched3 #f))
   (check-equal? resp2 '(2 2 2)))
 
-
-        
+; ways to frame this problem:
+; 1. take in state and a bool and return new state and the next place to check
+; 2. take a list of all past bools and returns the next place to check
+; 3. take in a bool and return the next place to check as well as a scheduler that will take another bool

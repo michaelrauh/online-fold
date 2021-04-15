@@ -30,7 +30,7 @@ Design for Fold V 2.0
     6. Add word to the end of raw.
     6. Add raw to phrase suffix tree.
     8. Update center map with result boxes.
-4. Hold an empty stack of pairs. Half of the pair is the ortho that has been found and the other is the current state of the scheduler. When a new box is found push it on and push scheduler state. Proceed by popping the top, asking the scheduler what is next and attempting that join. With this approach, the first 2x2 will beget higher shapes that can be returned to, and the scheduler will resume but not assume that higher blockers are there as they may move. Note: this scheduler does not yet exist. It will be based off of the rosette recursion scheme but must be refactored to take in a state and a result and return a next step.
+4. Take in any atoms that are made and designate them as destined to expand in dimension or cross dimension. Anything base dimension will do both, but in dimension first. Push these into a work queue. Pull the first thing off the queue, process it according to its plan, take outputs, and put them on the front of the work queue. Thread state through all the while.
     1. If the new shape is up a dimension (all twos) then trigger an up dimension transform
         1. Up dimension transforms will always act upon all-two boxes. (base dimension boxes)
         2. Start with new input box and check to make sure that each member of the box is a member of the forward map set. (andmap forward box contains other)

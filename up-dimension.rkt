@@ -12,6 +12,7 @@
                     (hash-update centers (calculate-foreign-lhs-center box) (λ (s) (set-add s box)) (set))))
   
   (state centers (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+(provide drive-up)
 
 (define (calculate-foreign-lhs-center box)
   (define dims (vector->list (array-shape (ortho-data box))))
