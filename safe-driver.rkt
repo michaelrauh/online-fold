@@ -1,5 +1,5 @@
 #lang racket
-(require "driver.rkt" 2htdp/batch-io threading suffixtree racket/trace math "grow-dimension.rkt" "up-dimension.rkt")
+(require "driver.rkt" 2htdp/batch-io threading racket/trace math "grow-dimension.rkt" "up-dimension.rkt")
 (provide calculate input-strings make-empty-state)
 
 ; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks. Broken phrases are not desired in output.
@@ -68,46 +68,47 @@
             (calculate (cdr input-strings) step))]))
 
 (define (make-empty-state)
-  (state #hash() #hash() #hash() #hash() (make-tree) (list) (set)))
+  (state #hash() #hash() #hash() #hash() (set) (list) (set)))
 
 (module+ test
   (require rackunit)
-;  (check-equal? (state-boxes (calculate (input-strings "a b c d a c b d") (make-empty-state)))
-;                (hash
-;                 '(2 2)
-;                 (set
-;                  (ortho
-;                   (array #[#["a" "b"] #["c" "d"]])
-;                   (array #[#["b"] #["d"]])
-;                   (list (set "a") (set "b" "c") (set "d")))
-;                  (ortho
-;                   (array #[#["a" "c"] #["b" "d"]])
-;                   (array #[#["c"] #["d"]])
-;                   (list (set "a") (set "b" "c") (set "d"))))
-;                 '(2 2 2)
-;                 (set)))
-;  (check-equal? (state-boxes (calculate (input-strings "a b c d a c b d e") (make-empty-state)))
-;                (hash
-;                 '(2 2)
-;                 (set
-;                  (ortho
-;                   (array #[#["a" "b"] #["c" "d"]])
-;                   (array #[#["b"] #["d"]])
-;                   (list (set "a") (set "b" "c") (set "d")))
-;                  (ortho
-;                   (array #[#["a" "c"] #["b" "d"]])
-;                   (array #[#["c"] #["d"]])
-;                   (list (set "a") (set "b" "c") (set "d"))))
-;                 '(2 2 2)
-;                 (set)))
+  (check-equal? (state-boxes (calculate (input-strings "a b c d a c b d") (make-empty-state)))
+                (hash
+                 '(2 2)
+                 (set
+                  (ortho
+                   (array #[#["a" "b"] #["c" "d"]])
+                   (array #[#["b"] #["d"]])
+                   (list (set "a") (set "b" "c") (set "d")))
+                  (ortho
+                   (array #[#["a" "c"] #["b" "d"]])
+                   (array #[#["c"] #["d"]])
+                   (list (set "a") (set "b" "c") (set "d"))))
+                 '(2 2 2)
+                 (set)))
+  (check-equal? (state-boxes (calculate (input-strings "a b c d a c b d e") (make-empty-state)))
+                (hash
+                 '(2 2)
+                 (set
+                  (ortho
+                   (array #[#["a" "b"] #["c" "d"]])
+                   (array #[#["b"] #["d"]])
+                   (list (set "a") (set "b" "c") (set "d")))
+                  (ortho
+                   (array #[#["a" "c"] #["b" "d"]])
+                   (array #[#["c"] #["d"]])
+                   (list (set "a") (set "b" "c") (set "d"))))
+                 '(2 2 2)
+                 (set)))
 
 
-; a b c  g h i
-; d e f  j k l
+  ; a b c  g h i
+  ; d e f  j k l
 
-; TODO figure out why the above is not found.
-; a b   g h
-; d e   j k
-; 2x2x2 is missing the above entry so the expand fails.
-  (check-equal? (hash-ref (state-boxes (calculate (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f l") (make-empty-state))) '(2 2 3))
-                5))
+  ; TODO figure out why the above is not found.
+  ; a b   g h
+  ; d e   j k
+  ; 2x2x2 is missing the above entry so the expand fails.
+  (define s (calculate (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f") (make-empty-state)))
+  (displayln "here")
+  (void (calculate (input-strings "l") s)))

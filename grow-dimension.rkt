@@ -1,5 +1,5 @@
 #lang racket
-(require "driver.rkt" math suffixtree racket/trace)
+(require "driver.rkt" math racket/trace)
 
 (define (drive-in s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
@@ -38,11 +38,19 @@
          (array-axis-swap arr (sub1 dims) ax))
        (range (sub1 dims))))
 
+(define (make-phrases raw)
+  (for/fold ([phrases (set)])
+            ([i (range 1 (add1 (length raw)))])
+    (set-union phrases (tails (take raw i)))))
+
+(define (tails raw)
+  (if (= 1 (length raw))
+      (set raw)
+      (set-union (set raw) (tails (cdr raw)))))
+
 (module+ test
   (require rackunit)
-  (define phrases-three (make-tree))
-  (tree-add! phrases-three (vector->label/with-sentinel (list->vector (list "a" "b" "e"))))
-  (tree-add! phrases-three (vector->label/with-sentinel (list->vector (list "c" "d" "f"))))
+  (define phrases-three (set-union (make-phrases (list "a" "b" "e")) (make-phrases (list "c" "d" "f"))))
   (check-equal? (drive-in (state
                            (hash (array #[#["b"] #["d"]])
                                  (set
@@ -123,9 +131,7 @@
 
 (module+ test
   (require rackunit)
-  (define phrases (make-tree))
-  (tree-add! phrases (vector->label/with-sentinel (list->vector (list "a" "b" "e"))))
-  (tree-add! phrases (vector->label/with-sentinel (list->vector (list "c" "d" "f"))))
+  (define phrases (set-union (make-phrases (list "a" "b" "e")) (make-phrases (list "c" "d" "f"))))
   (check-equal?
    (combine phrases (hash (array #[#["b"] #["d"]])
                           (set
@@ -147,13 +153,11 @@
   (define lhs-phrases (get-phrases cur))
   (define rhs-words (get-words b))
   (define desired-phrases (map (λ (l r) (append l (list r))) lhs-phrases rhs-words))
-  (andmap (λ (p) (tree-contains? phrases (vector->label (list->vector p)))) desired-phrases))
+  (andmap (λ (p) (set-member? phrases p)) desired-phrases))
 
 (module+ test
   (require rackunit)
-  (define phrases-two (make-tree))
-  (tree-add! phrases-two (vector->label/with-sentinel (list->vector (list "a" "b" "e"))))
-  (tree-add! phrases-two (vector->label/with-sentinel (list->vector (list "c" "d" "f"))))
+  (define phrases-two (set-union (make-phrases (list "a" "b" "e")) (make-phrases (list "c" "d" "f"))))
   (check-true
    (phrase-filter phrases-two
                   (array #[#["a" "b"] #["c" "d"]])
