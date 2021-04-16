@@ -70,45 +70,16 @@
 (define (make-empty-state)
   (state #hash() #hash() #hash() #hash() (set) (list) (set)))
 
-(module+ test
-  (require rackunit)
-  (check-equal? (state-boxes (calculate (input-strings "a b c d a c b d") (make-empty-state)))
-                (hash
-                 '(2 2)
-                 (set
-                  (ortho
-                   (array #[#["a" "b"] #["c" "d"]])
-                   (array #[#["b"] #["d"]])
-                   (list (set "a") (set "b" "c") (set "d")))
-                  (ortho
-                   (array #[#["a" "c"] #["b" "d"]])
-                   (array #[#["c"] #["d"]])
-                   (list (set "a") (set "b" "c") (set "d"))))
-                 '(2 2 2)
-                 (set)))
-  (check-equal? (state-boxes (calculate (input-strings "a b c d a c b d e") (make-empty-state)))
-                (hash
-                 '(2 2)
-                 (set
-                  (ortho
-                   (array #[#["a" "b"] #["c" "d"]])
-                   (array #[#["b"] #["d"]])
-                   (list (set "a") (set "b" "c") (set "d")))
-                  (ortho
-                   (array #[#["a" "c"] #["b" "d"]])
-                   (array #[#["c"] #["d"]])
-                   (list (set "a") (set "b" "c") (set "d"))))
-                 '(2 2 2)
-                 (set)))
+; a b c  g h i
+; d e f  j k l
 
-
-  ; a b c  g h i
-  ; d e f  j k l
-
-  ; TODO figure out why the above is not found.
-  ; a b   g h
-  ; d e   j k
-  ; 2x2x2 is missing the above entry so the expand fails.
-  (define s (calculate (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f") (make-empty-state)))
-  (displayln "here")
-  (void (calculate (input-strings "l") s)))
+; TODO figure out why the above is not found.
+; a b   g h
+; d e   j k
+; 2x2x2 is missing the above entry so the expand fails.
+; hypothesis: the above 2x2x2 is missing because g h j k comes second and only ever appears on the left hand side.
+; This is an issue in both up and over transforms.
+; TODO make both up and over transforms attempt to combine from LHS and RHS
+(define s (calculate (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f") (make-empty-state)))
+(display (hash-ref (state-boxes s) '(2 2 2)))
+(void (calculate (input-strings "l") s))
