@@ -5,7 +5,7 @@
 (define (drive-up s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
   (define new-dims (cons 2 dims))
-  (define increment (list->set (apply append (map rotations (combine (state-next s) (state-boxes s) cur dims)))))
+  (define increment (list->set (apply append (map rotations (combine (state-next s) (state-prev s) (state-boxes s) cur dims)))))
   (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s increment)) (set)))
   (define centers (for/fold ([centers (state-centers s)])
                             ([box increment])
@@ -137,17 +137,22 @@
                        
                        
 ; TODO stop passing dims around when it can be calculated
-(define (combine next boxes cur dims)
+(define (combine next prev boxes cur dims)
   (define combine-candidates (hash-ref boxes dims))
-  (define refined-candidates (filter (λ (b) (next-filter next cur b)) (set->list combine-candidates)))
-  (define selected-candidates (filter (λ (b) (diagonal-filter cur b)) refined-candidates))
-  (map (λ (b) (combine-winners cur b)) selected-candidates))
+  (define next-candidates (filter (λ (b) (next-filter next cur b)) (set->list combine-candidates)))
+  (define prev-candidates (filter (λ (b) (next-filter prev cur b)) (set->list combine-candidates)))
+  (define selected-next-candidates (filter (λ (b) (diagonal-filter cur b)) next-candidates))
+  (define selected-prev-candidates (filter (λ (b) (diagonal-filter cur b)) prev-candidates))
+  (define next-winners (map (λ (b) (combine-winners cur b)) selected-next-candidates))
+  (define prev-winners (map (λ (b) (combine-winners b cur)) selected-prev-candidates))
+  (append next-winners prev-winners))
 
 (module+ test
   (require rackunit)
   
   (check-equal? (combine
                  #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+                 #hash(("b" . (set "a")) ("c" . (set "a")) ("d" . (set "b" "c")) ("e" . (set "a")) ("f" . (set "e")) ("g" . (set "e")) ("h" . (set "f")))
                  (hash '(2 2)
                        (set
                         (ortho
@@ -171,7 +176,7 @@
 (define (next-filter next cur candidate)
   (for/and ([from-word (array->list (array-flatten (ortho-data cur)))]
             [target-word (array->list (array-flatten (ortho-data candidate)))])
-    (set-member? (hash-ref next from-word) target-word)))
+    (set-member? (hash-ref next from-word (set)) target-word)))
 
 (module+ test
   (require rackunit)
