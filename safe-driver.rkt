@@ -23,13 +23,15 @@
   (define work-queue (for/fold ([queue (list)])
                                ([b increment])
                        (append queue (list (over b)) (list (up b)))))
-  (sift s work-queue))
+  (sift s work-queue 0))
 
-(define (sift s work-queue)
+(define (sift s work-queue cycles)
   (if (empty? work-queue)
-      s
+      (begin
+        (displayln cycles)
+        s)
       (let ([step (drive-generic s (car work-queue))])
-        (sift step (append (decorate (state-increment step)) (cdr work-queue))))))
+        (sift step (append (decorate (state-increment step)) (cdr work-queue)) (add1 cycles)))))
 
 (define (drive-generic s cur)
   (cond
@@ -70,7 +72,8 @@
 (define (make-empty-state)
   (state #hash() #hash() #hash() #hash() #hash() (set) (list) (set)))
 
-;(define wow (calculate (input-from-file) (make-empty-state)))
+(define wow (calculate (input-from-file) (make-empty-state)))
+(displayln (hash-keys (state-boxes wow)))
 
 (module+ test
   ; a b c  g h i
