@@ -1,7 +1,6 @@
 #lang racket
 (require "driver.rkt" math racket/trace)
 
-; TODO - calculate combine from rhs
 (define (drive-in s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
   (define increment (make-increment s cur))

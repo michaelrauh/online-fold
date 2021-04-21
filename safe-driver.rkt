@@ -1,5 +1,5 @@
 #lang racket
-(require "driver.rkt" 2htdp/batch-io threading racket/trace math "grow-dimension.rkt" "up-dimension.rkt")
+(require "driver.rkt" 2htdp/batch-io threading racket/trace math profile "grow-dimension.rkt" "up-dimension.rkt")
 (provide calculate input-strings make-empty-state)
 
 ; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks. Broken phrases are not desired in output.
@@ -23,13 +23,12 @@
   (define work-queue (for/fold ([queue (list)])
                                ([b increment])
                        (append queue (list (over b)) (list (up b)))))
-  (sift s work-queue 0))
+  (time (sift s work-queue 0)))
 
 (define (sift s work-queue cycles)
   (if (empty? work-queue)
-      (begin
-        (displayln cycles)
-        s)
+      (begin (displayln cycles)
+      s)
       (let ([step (drive-generic s (car work-queue))])
         (sift step (append (decorate (state-increment step)) (cdr work-queue)) (add1 cycles)))))
 
@@ -65,15 +64,16 @@
   (cond
     [(empty? input-strings) state]
     [else (begin
-            (displayln (car input-strings))
             (define step (safe-drive state (car input-strings)))
             (calculate (cdr input-strings) step))]))
 
 (define (make-empty-state)
   (state #hash() #hash() #hash() #hash() #hash() (set) (list) (set)))
 
-(define wow (calculate (input-from-file) (make-empty-state)))
-(displayln (hash-keys (state-boxes wow)))
+(trace safe-drive)
+
+;(define wow (calculate (input-from-file) (make-empty-state)))
+;(displayln (state-boxes wow))
 
 (module+ test
   ; a b c  g h i

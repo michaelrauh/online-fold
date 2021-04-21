@@ -13,7 +13,6 @@
   (define rhs-center-to-ortho (for/fold ([centers (state-rhs-center-to-ortho s)])
                             ([box increment])
                     (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
-  
   (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
 (provide drive-up)
 
@@ -182,7 +181,7 @@
   (define next-candidates (filter (λ (b) (next-filter next cur b)) (set->list combine-candidates)))
   (define prev-candidates (filter (λ (b) (next-filter prev cur b)) (set->list combine-candidates)))
   (define selected-next-candidates (filter (λ (b) (diagonal-filter cur b)) next-candidates))
-  (define selected-prev-candidates (filter (λ (b) (diagonal-filter cur b)) prev-candidates))
+  (define selected-prev-candidates (filter (λ (b) (diagonal-filter b cur)) prev-candidates))
   (define next-winners (map (λ (b) (combine-winners cur b)) selected-next-candidates))
   (define prev-winners (map (λ (b) (combine-winners b cur)) selected-prev-candidates))
   (append next-winners prev-winners))
