@@ -5,20 +5,8 @@
          math)
 
 (struct res (a b c d) #:transparent)
-(struct ortho (data center diagonals) #:transparent)
-(provide make-boxes calculate-lhs-foreign-center (struct-out ortho))
-
-; Assumption: This will only ever be called on an ortho with a 2x2 in it
-(define (calculate-lhs-foreign-center b)
-  (array-slice-ref (ortho-data b) '((0 1) (0))))
-
-(module+ test
-  (require rackunit)
-  (check-equal? (calculate-lhs-foreign-center (ortho
-                                   (array #[#["a" "b"] #["c" "d"]])
-                                   (array #[#["a"] #["c"]])
-                                   (list (set "a") (set "b" "c") (set "d"))))
-                (array #[#["a"] #["c"]])))
+(struct ortho (data lhs-center rhs-center diagonals) #:transparent)
+(provide make-boxes (struct-out ortho))
 
 ; assumption - the latest word passed in is the furthest along in the stream. The stream is being fed in order.
 (define (smash word next prev)
@@ -53,13 +41,14 @@
   (define b (res-b x))
   (define c (res-c x))
   (define d (res-d x))
-  (ortho (array #[#[a b] #[c d]]) (array #[#[b] #[d]]) (list (set a) (set b c) (set d))))
+  (ortho (array #[#[a b] #[c d]]) (array #[#[a] #[c]]) (array #[#[b] #[d]]) (list (set a) (set b c) (set d))))
 
 (module+ test
   (require rackunit)
   (check-equal? (grab (res "a" "b" "c" "d"))
                 (ortho
                  (array #[#["a" "b"] #["c" "d"]])
+                 (array #[#["a"] #["c"]])
                  (array #[#["b"] #["d"]])
                  (list (set "a") (set "b" "c") (set "d")))))
 
@@ -72,10 +61,12 @@
    (set
     (ortho
      (array #[#["a" "c"] #["b" "d"]])
+     (array #[#["a"] #["b"]])
      (array #[#["c"] #["d"]])
      (list (set "a") (set "b" "c") (set "d")))
     (ortho
      (array #[#["a" "b"] #["c" "d"]])
+     (array #[#["a"] #["c"]])
      (array #[#["b"] #["d"]])
      (list (set "a") (set "b" "c") (set "d"))))))
 

@@ -33,7 +33,7 @@ Design for Fold V 2.0
 4. Take in any atoms that are made and designate them as destined to expand in dimension or cross dimension. Anything base dimension will do both, but in dimension first. Push these into a work queue. Pull the first thing off the queue, process it according to its plan, take outputs, and put them on the front of the work queue. Thread state through all the while.
     1. If the new shape is up a dimension (all twos) then trigger an up dimension transform
         1. Up dimension transforms will always act upon all-two boxes. (base dimension boxes)
-        2. Start with new input box and check to make sure that each member of the box is a member of the forward map set. (andmap forward box contains other)
+        2. Start with new input box and check to make sure that each member of the box is a member of the forward map set. (andmap forward box contains other). This will handle the left to right combine. Do right to left as well using the previous map.
         3. Of remaining boxes, and together the set disjoint operation of each diagonal bucket in list with every other box. filter by this.
         4. Remaining boxes may be combined into a result type. RHS centers and diagonal buckets can be computed from previous RHS centers and diagonals.
             1. Computing diagonal buckets. drop first of LHS, drop last of RHS. set union at each list position, put dropped things back.
@@ -42,7 +42,7 @@ Design for Fold V 2.0
         5. Once these are combined update state to reflect. There will be entries missing from centers and boxes. Increment should be overwritten with these results. Specifically, the caller or driver of this combine needs to take boxes and frame that as an increment while updating centers and boxes.
         6. Update state to include all rotations of the new centers and boxes. All rotations mean all top left corner (or all diagonal) preserving rotations. In particular, swap the minor axis with every other one.
     2. If the new shape is to expand a dimension then trigger an extend transform
-        1. The building blocks of the new thing will be something of the same dims but the minor dim will be one less. The transform increments the most minor dimension. 
+        1. The building blocks of the new thing will be something of the same dims but the minor dim will be one less. The transform increments the most minor dimension. Combine left to right and right to left.
             3. Combine the current with the other in the most minor axis.
                 1. look up the center of the candidate against existing centers.
                 2. Perform the next words check
