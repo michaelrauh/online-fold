@@ -2,9 +2,10 @@
 
 (require "atom-smasher.rkt" math)
 
-(struct phrases (by-first by-second raw))
-(struct state (lhs-center-to-ortho rhs-center-to-ortho boxes phrases raw increment))
-(provide (struct-out state) (struct-out ortho) drive)
+; TODO take transparent out and put hashing functions back
+(struct phrases (by-first by-second raw) #:transparent)
+(struct state (lhs-center-to-ortho rhs-center-to-ortho boxes phrases raw increment) #:transparent)
+(provide (struct-out state) (struct-out phrases) (struct-out ortho) drive)
 
 ; assumption - raw is nonempty. Only 2x2 are desired.
 (define (drive s cur)

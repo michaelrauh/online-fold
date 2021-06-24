@@ -11,11 +11,11 @@
                                         ([box increment])
                                 (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
   (define boxes (make-boxes increment s))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+  (state lhs-center-to-ortho rhs-center-to-ortho boxes (state-phrases s) (state-raw s) (list->set increment)))
 (provide drive-in)
 
 (define (make-increment s cur)
-  (apply append (map rotations (combine (state-phrases s) (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) cur))))
+  (apply append (map rotations (combine (phrases-raw (state-phrases s)) (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) cur))))
 
 (define (make-boxes increment s)
   (for/fold ([boxes (state-boxes s)])
@@ -68,10 +68,11 @@
                                    (array #[#["b"] #["d"]])
                                    (array #[#["e"] #["f"]])
                                    (list (set "b") (set "e" "d") (set "f")))))
-                           null
-                           null
                            #hash()
-                           phrases-three
+                           (phrases
+                            null
+                            null
+                           phrases-three)
                            null
                            null)
                           (ortho
@@ -124,8 +125,6 @@
                     (array #[#["b"] #["d"]])
                     (array #[#["e"] #["f"]])
                     (list (set "b") (set "d" "e") (set "f")))))
-                 '()
-                 '()
                  (hash
                   '(3 2)
                   (set
@@ -141,7 +140,7 @@
                     (array #[#["a" "b"] #["c" "d"]])
                     (array #[#["b" "e"] #["d" "f"]])
                     (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
-                 phrases-three
+                 (phrases '() '() phrases-three)
                  '()
                  (set
                   (ortho
