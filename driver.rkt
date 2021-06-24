@@ -1,15 +1,15 @@
 #lang racket
 
 (require "atom-smasher.rkt" math)
-(struct state (lhs-center-to-ortho rhs-center-to-ortho next prev boxes phrases raw increment)
+
+(struct phrases (by-first by-second raw))
+(struct state (lhs-center-to-ortho rhs-center-to-ortho boxes phrases raw increment)
   #:methods
   gen:equal+hash
   [(define (equal-proc a b equal?-recur)
      ; compare a and b
      (and (equal?-recur (state-lhs-center-to-ortho a) (state-lhs-center-to-ortho b))
-          (equal?-recur (state-rhs-center-to-ortho a) (state-rhs-center-to-ortho b))
-          (equal?-recur (state-next a) (state-next b))
-          (equal?-recur (state-prev a) (state-prev b))
+          (equal?-recur (state-rhs-center-to-ortho a) (state-rhs-center-to-ortho b))          
           (equal?-recur (state-boxes a) (state-boxes b))
           (equal?-recur (state-phrases a) (state-phrases b))
           (equal?-recur (state-raw a) (state-raw b))
@@ -18,8 +18,6 @@
      ; compute primary hash code of a
      (+ (hash-recur (state-lhs-center-to-ortho a))
         (* 3 (hash-recur (state-rhs-center-to-ortho a)))
-        (* 5 (hash-recur (state-next a)))
-        (* 7 (hash-recur (state-prev a)))
         (* 11 (hash-recur (state-boxes a)))
         (* 13 (hash-recur (state-phrases a)))
         (* 17 (hash-recur (state-raw a)))
@@ -28,8 +26,6 @@
      ; compute secondary hash code of a
      (+ (hash2-recur (state-lhs-center-to-ortho a))
         (hash2-recur (state-rhs-center-to-ortho a))
-        (hash2-recur (state-next a))
-        (hash2-recur (state-prev a))
         (hash2-recur (state-boxes a))
         (hash2-recur (state-phrases a))
         (hash2-recur (state-raw a))
@@ -38,11 +34,12 @@
 
 ; assumption - raw is nonempty. Only 2x2 are desired.
 (define (drive s cur)
+  (define p (state-phrases s))
   (define prev (last (state-raw s)))
   (define new-raw (append (state-raw s) (list cur)))
-  (define new-phrases (set-union (state-phrases s) (tails new-raw)))
-  (define new-next (hash-update (state-next s) prev (λ (s) (set-add s cur)) (set)))
-  (define new-prev (hash-update (state-prev s) cur (λ (s) (set-add s prev)) (set)))
+  (define new-phrases (set-union (phrases-raw (state-phrases s)) (tails new-raw)))
+  (define new-next (hash-update (phrases-by-first p) prev (λ (s) (set-add s cur)) (set)))
+  (define new-prev (hash-update (phrases-by-second p) cur (λ (s) (set-add s prev)) (set)))
   (define increment (make-boxes cur new-next new-prev))
   (define lhs-center-to-ortho (for/fold ([centers (state-lhs-center-to-ortho s)])
                                         ([box increment])
@@ -51,7 +48,7 @@
                                         ([box increment])
                                 (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
   (define new-boxes (hash-update (state-boxes s) '(2 2) (λ (s) (set-union s increment)) (set)))
-  (state lhs-center-to-ortho rhs-center-to-ortho new-next new-prev new-boxes new-phrases new-raw increment))
+  (state lhs-center-to-ortho rhs-center-to-ortho new-boxes (phrases new-next new-prev new-phrases) new-raw increment))
 
 (define (tails raw)
   (if (= 1 (length raw))
@@ -68,7 +65,7 @@
   (define next #hash(("a" . (set "b" "c")) ("b" . (set "c")) ("c" . (set "d" "b")) ("d" . (set "a"))))
   (define prev #hash(("a" . (set "d")) ("b" . (set "a" "c")) ("c" . (set "a" "b")) ("d" . (set "c"))))
   (define tree (make-phrases '("a" "b" "c" "d" "a" "c" "b")))
-  (define res (drive (state #hash() #hash() next prev #hash() tree
+  (define res (drive (state #hash() #hash() #hash() (phrases next prev tree)
                             '("a" "b" "c" "d" "a" "c" "b") (set)) "d"))
 
   (check-equal? (state-lhs-center-to-ortho res)
@@ -103,12 +100,12 @@
                    (array #[#["a"] #["c"]])
                    (array #[#["b"] #["d"]])
                    (list (set "a") (set "b" "c") (set "d"))))))
-  (check-equal? (state-next res)
+  (check-equal? (phrases-by-first (state-phrases res))
                 #hash(("a" . (set "b" "c"))
                       ("b" . ("d" set "c"))
                       ("c" . (set "d" "b"))
                       ("d" . (set "a"))))
-  (check-equal? (state-prev res)
+  (check-equal? (phrases-by-second (state-phrases res))
                 #hash(("a" . (set "d"))
                       ("b" . (set "a" "c"))
                       ("c" . (set "a" "b"))
@@ -127,7 +124,7 @@
                    (array #[#["a"] #["b"]])
                    (array #[#["c"] #["d"]])
                    (list (set "a") (set "b" "c") (set "d"))))))
-  (check-true (set-member? (state-phrases res) (list "a" "b" "c" "d" "a" "c" "b" "d")))
+  (check-true (set-member? (phrases-raw (state-phrases res)) (list "a" "b" "c" "d" "a" "c" "b" "d")))
   (check-equal? (state-raw res) '("a" "b" "c" "d" "a" "c" "b" "d"))
   (check-equal? (state-increment res)
                 (set
