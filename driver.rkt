@@ -3,33 +3,7 @@
 (require "atom-smasher.rkt" math)
 
 (struct phrases (by-first by-second raw))
-(struct state (lhs-center-to-ortho rhs-center-to-ortho boxes phrases raw increment)
-  #:methods
-  gen:equal+hash
-  [(define (equal-proc a b equal?-recur)
-     ; compare a and b
-     (and (equal?-recur (state-lhs-center-to-ortho a) (state-lhs-center-to-ortho b))
-          (equal?-recur (state-rhs-center-to-ortho a) (state-rhs-center-to-ortho b))          
-          (equal?-recur (state-boxes a) (state-boxes b))
-          (equal?-recur (state-phrases a) (state-phrases b))
-          (equal?-recur (state-raw a) (state-raw b))
-          (equal?-recur (state-increment a) (state-increment b))))
-   (define (hash-proc a hash-recur)
-     ; compute primary hash code of a
-     (+ (hash-recur (state-lhs-center-to-ortho a))
-        (* 3 (hash-recur (state-rhs-center-to-ortho a)))
-        (* 11 (hash-recur (state-boxes a)))
-        (* 13 (hash-recur (state-phrases a)))
-        (* 17 (hash-recur (state-raw a)))
-        (* 19 (hash-recur (state-increment a)))))
-   (define (hash2-proc a hash2-recur)
-     ; compute secondary hash code of a
-     (+ (hash2-recur (state-lhs-center-to-ortho a))
-        (hash2-recur (state-rhs-center-to-ortho a))
-        (hash2-recur (state-boxes a))
-        (hash2-recur (state-phrases a))
-        (hash2-recur (state-raw a))
-        (hash2-recur (state-increment a))))])
+(struct state (lhs-center-to-ortho rhs-center-to-ortho boxes phrases raw increment))
 (provide (struct-out state) (struct-out ortho) drive)
 
 ; assumption - raw is nonempty. Only 2x2 are desired.
