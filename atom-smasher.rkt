@@ -1,27 +1,24 @@
 #lang racket
 
-(require data/monad 
-         data/applicative
-         math)
+(require math)
 
+; TODO make these structs no longer transparent
 (struct res (a b c d) #:transparent)
 (struct ortho (data lhs-center rhs-center diagonals) #:transparent)
 (provide make-boxes (struct-out ortho))
 
 ; assumption - the latest word passed in is the furthest along in the stream. The stream is being fed in order.
 (define (smash word next prev)
-  ; d <- c <- a -> b -> d'
   (define d word)
-  (list->set
-   (sequence->list
-    (do [c <- (hash-ref prev d (set))]
-      [a <- (hash-ref prev c (set))]
-      [b <- (hash-ref next a (set))]
-      [d-prime <- (hash-ref next b (set))]
-      (if (and
-           (equal? d d-prime)
-           (not (equal? b c))) (pure (res a b c d))
-                               '())))))
+  (list->set (for*/list (
+              [c (hash-ref prev d (set))]
+              [a (hash-ref prev c (set))]
+              [b (hash-ref next a (set))]
+              [d-prime (hash-ref next b (set))]
+              #:when (and
+                      (equal? d d-prime)
+                      (not (equal? b c))))
+    (res a b c d))))
 
 (module+ test
   (require rackunit)
