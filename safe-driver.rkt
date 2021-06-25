@@ -87,7 +87,12 @@
 
 (define (make-empty-state)
   (state #hash() #hash() #hash() (phrases #hash() #hash() (set)) (list) (set)))
+
+(define (make-empty-phrases)
+  (phrases #hash() #hash() (set)))
 (trace safe-drive)
+
+;(calculate-phrases (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f") (phrases #hash() #hash() (set)) (list))
 
 ;(define wow (calculate (input-from-file) (make-empty-state)))
 ;(displayln (state-boxes wow))
