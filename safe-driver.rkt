@@ -10,6 +10,16 @@
     [(empty? (state-raw s)) (state (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) (state-boxes s) (phrases (phrases-by-first p) (phrases-by-second p) (phrases-raw p)) (append (state-raw s) (list cur)) (set))]
     [else (process s cur)]))
 
+;(define-values (step-p step-raw) (safe-drive-phrases p raw (car input-strings)))
+(define (safe-drive-phrases p raw cur)
+  (cond
+    [(equal? "stringbreakingpoint" cur) (values (phrases (phrases-by-first p) (phrases-by-second p) (phrases-raw p)) (list))]
+    [(empty? raw) (values (phrases (phrases-by-first p) (phrases-by-second p) (phrases-raw p)) (append raw (list cur)))]
+    [else (process-phrases p raw cur)]))
+
+(define (process-phrases p raw cur)
+  (drive-phrases p cur raw))
+
 (define (process s cur)
   (define base-state (drive s cur))
   (if (empty? (state-increment base-state))
@@ -67,6 +77,13 @@
     [else (begin
             (define step (safe-drive state (car input-strings)))
             (calculate (cdr input-strings) step))]))
+
+(define (calculate-phrases input-strings p raw)
+  (cond
+    [(empty? input-strings) p]
+    [else (begin
+            (define-values (step-p step-raw) (safe-drive-phrases p raw (car input-strings)))
+            (calculate-phrases (cdr input-strings) step-p step-raw))]))
 
 (define (make-empty-state)
   (state #hash() #hash() #hash() (phrases #hash() #hash() (set)) (list) (set)))

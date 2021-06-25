@@ -48,7 +48,7 @@
         (hash2-recur (state-phrases a))
         (hash2-recur (state-raw a))
         (hash2-recur (state-increment a))))])
-(provide (struct-out state) (struct-out phrases) (struct-out ortho) drive)
+(provide (struct-out state) (struct-out phrases) (struct-out ortho) drive drive-phrases)
 
 ; assumption - raw is nonempty. Only 2x2 are desired.
 (define (drive s cur)
