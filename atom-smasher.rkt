@@ -3,8 +3,46 @@
 (require math)
 
 ; TODO make these structs no longer transparent
-(struct res (a b c d) #:transparent)
-(struct ortho (data lhs-center rhs-center diagonals) #:transparent)
+(struct res (a b c d) #:methods
+  gen:equal+hash
+  [(define (equal-proc a b equal?-recur)
+     ; compare a and b
+     (and (equal?-recur (res-a a) (res-a b))
+          (equal?-recur (res-b a) (res-b b))
+          (equal?-recur (res-c a) (res-c b))
+          (equal?-recur (res-d a) (res-d b))))
+   (define (hash-proc a hash-recur)
+     ; compute primary hash code of a
+     (+ (hash-recur (res-a a))
+        (* 3 (hash-recur (res-b a)))
+        (* 11 (hash-recur (res-c a)))
+        (* 13 (hash-recur (res-d a)))))
+   (define (hash2-proc a hash2-recur)
+     ; compute secondary hash code of a
+     (+ (hash2-recur (res-a a))
+        (hash2-recur (res-b a))
+        (hash2-recur (res-c a))
+        (hash2-recur (res-d a))))])
+(struct ortho (data lhs-center rhs-center diagonals) #:methods
+  gen:equal+hash
+  [(define (equal-proc a b equal?-recur)
+     ; compare a and b
+     (and (equal?-recur (ortho-data a) (ortho-data b))
+          (equal?-recur (ortho-lhs-center a) (ortho-lhs-center b))
+          (equal?-recur (ortho-rhs-center a) (ortho-rhs-center b))
+          (equal?-recur (ortho-diagonals a) (ortho-diagonals b))))
+   (define (hash-proc a hash-recur)
+     ; compute primary hash code of a
+     (+ (hash-recur (ortho-data a))
+        (* 3 (hash-recur (ortho-lhs-center a)))
+        (* 11 (hash-recur (ortho-rhs-center a)))
+        (* 13 (hash-recur (ortho-diagonals a)))))
+   (define (hash2-proc a hash2-recur)
+     ; compute secondary hash code of a
+     (+ (hash2-recur (ortho-data a))
+        (hash2-recur (ortho-lhs-center a))
+        (hash2-recur (ortho-rhs-center a))
+        (hash2-recur (ortho-diagonals a))))])
 (provide make-boxes (struct-out ortho))
 
 ; assumption - the latest word passed in is the furthest along in the stream. The stream is being fed in order.
