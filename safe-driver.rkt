@@ -70,7 +70,6 @@
 
 (define (make-empty-state)
   (state #hash() #hash() #hash() (phrases #hash() #hash() (set)) (list) (set)))
-;(struct state (lhs-center-to-ortho rhs-center-to-ortho next prev boxes phrases raw increment)
 (trace safe-drive)
 
 ;(define wow (calculate (input-from-file) (make-empty-state)))

@@ -68,6 +68,14 @@
   (define new-boxes (hash-update (state-boxes s) '(2 2) (λ (s) (set-union s increment)) (set)))
   (state lhs-center-to-ortho rhs-center-to-ortho new-boxes (phrases new-next new-prev new-phrases) new-raw increment))
 
+(define (drive-phrases p cur raw)
+  (define prev (last raw))
+  (define new-raw (append raw (list cur)))
+  (define new-phrases (set-union (phrases-raw p) (tails new-raw)))
+  (define new-next (hash-update (phrases-by-first p) prev (λ (s) (set-add s cur)) (set)))
+  (define new-prev (hash-update (phrases-by-second p) cur (λ (s) (set-add s prev)) (set)))
+  (values (phrases new-next new-prev new-phrases) new-raw))
+
 (define (tails raw)
   (if (= 1 (length raw))
       (set raw)

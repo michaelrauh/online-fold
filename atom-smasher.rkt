@@ -10,7 +10,7 @@
 ; assumption - the latest word passed in is the furthest along in the stream. The stream is being fed in order.
 (define (smash word next prev)
   (define d word)
-  (list->set (for*/list (
+  (for*/set (
               [c (hash-ref prev d (set))]
               [a (hash-ref prev c (set))]
               [b (hash-ref next a (set))]
@@ -18,7 +18,7 @@
               #:when (and
                       (equal? d d-prime)
                       (not (equal? b c))))
-    (res a b c d))))
+    (res a b c d)))
 
 (module+ test
   (require rackunit)
