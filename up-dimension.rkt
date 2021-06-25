@@ -3,9 +3,10 @@
 
 ; assumption - input is at lowest volume for dimensionality (all 2s)
 (define (drive-up s cur)
+  (define p (state-phrases s))
   (define dims (vector->list (array-shape (ortho-data cur))))
   (define new-dims (cons 2 dims))
-  (define increment (list->set (apply append (map rotations (combine (state-next s) (state-prev s) (state-boxes s) cur dims)))))
+  (define increment (list->set (apply append (map rotations (combine (phrases-by-first p) (phrases-by-second p) (state-boxes s) cur dims)))))
   (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s increment)) (set)))
   (define lhs-center-to-ortho (for/fold ([centers (state-lhs-center-to-ortho s)])
                             ([box increment])
@@ -13,7 +14,7 @@
   (define rhs-center-to-ortho (for/fold ([centers (state-rhs-center-to-ortho s)])
                             ([box increment])
                     (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+  (state lhs-center-to-ortho rhs-center-to-ortho boxes (state-phrases s) (state-raw s) (list->set increment)))
 (provide drive-up)
 
 (define (calculate-lhs-center arr)
@@ -51,8 +52,6 @@
   (check-equal? (drive-up (state
                            #hash()
                            #hash()
-                           #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
-                           #hash()
                            (hash '(2 2)
                                  (set
                                   (ortho
@@ -65,7 +64,8 @@
                                    (array #[#["a"] #["c"]])
                                    (array #[#["b"] #["d"]])
                                    (list (set "a") (set "b" "c") (set "d")))))
-                           null
+                           (phrases #hash(("a" . (set "b" "c" "e")) ("b" . (set "d" "f")) ("c" . (set "d" "g")) ("d" . (set "h")) ("e" . (set "f" "g")) ("f" . (set "h")) ("g" . (set "h")))
+                           #hash() null)
                            null
                            null) (ortho
                                   (array #[#["a" "b"] #["c" "d"]])
@@ -117,14 +117,6 @@
                     (array #[#[#["a"] #["b"]] #[#["e"] #["f"]]])
                     (array #[#[#["c"] #["d"]] #[#["g"] #["h"]]])
                     (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
-                 '#hash(("a" . (set "b" "c" "e"))
-                        ("b" . (set "d" "f"))
-                        ("c" . (set "d" "g"))
-                        ("d" . (set "h"))
-                        ("e" . (set "f" "g"))
-                        ("f" . (set "h"))
-                        ("g" . (set "h")))
-                 '#hash()
                  (hash
                   '(2 2)
                   (set
@@ -155,7 +147,14 @@
                     (array #[#[#["a"] #["b"]] #[#["e"] #["f"]]])
                     (array #[#[#["c"] #["d"]] #[#["g"] #["h"]]])
                     (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
-                 '()
+                 (phrases '#hash(("a" . (set "b" "c" "e"))
+                        ("b" . (set "d" "f"))
+                        ("c" . (set "d" "g"))
+                        ("d" . (set "h"))
+                        ("e" . (set "f" "g"))
+                        ("f" . (set "h"))
+                        ("g" . (set "h")))
+                 '#hash() '())
                  '()
                  (set
                   (ortho

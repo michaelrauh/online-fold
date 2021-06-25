@@ -4,9 +4,10 @@
 
 ; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks. Broken phrases are not desired in output.
 (define (safe-drive s cur)
+  (define p (state-phrases s))
   (cond
-    [(equal? "stringbreakingpoint" cur) (state (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (list) (set))]
-    [(empty? (state-raw s)) (state (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (append (state-raw s) (list cur)) (set))]
+    [(equal? "stringbreakingpoint" cur) (state (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) (state-boxes s) (phrases (phrases-by-first p) (phrases-by-second p) (phrases-raw p))  (list) (set))]
+    [(empty? (state-raw s)) (state (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) (state-boxes s) (phrases (phrases-by-first p) (phrases-by-second p) (phrases-raw p)) (append (state-raw s) (list cur)) (set))]
     [else (process s cur)]))
 
 (define (process s cur)
@@ -68,8 +69,8 @@
             (calculate (cdr input-strings) step))]))
 
 (define (make-empty-state)
-  (state #hash() #hash() #hash() #hash() #hash() (set) (list) (set)))
-
+  (state #hash() #hash() #hash() (phrases #hash() #hash() (set)) (list) (set)))
+;(struct state (lhs-center-to-ortho rhs-center-to-ortho next prev boxes phrases raw increment)
 (trace safe-drive)
 
 ;(define wow (calculate (input-from-file) (make-empty-state)))
