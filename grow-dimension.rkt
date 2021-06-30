@@ -1,9 +1,9 @@
 #lang racket
 (require "driver.rkt" math racket/trace)
 
-(define (drive-in s cur)
+(define (drive-in s cur phrases)
   (define dims (vector->list (array-shape (ortho-data cur))))
-  (define increment (make-increment s cur))
+  (define increment (make-increment s phrases cur))
   (define lhs-center-to-ortho (for/fold ([centers (state-lhs-center-to-ortho s)])
                                         ([box increment])
                                 (hash-update centers (ortho-lhs-center box) (λ (s) (set-add s box)) (set))))
@@ -11,11 +11,11 @@
                                         ([box increment])
                                 (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
   (define boxes (make-boxes increment s))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-raw s) (list->set increment)))
 (provide drive-in)
 
-(define (make-increment s cur)
-  (apply append (map rotations (combine (state-phrases s) (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) cur))))
+(define (make-increment s phrases cur)
+  (apply append (map rotations (combine phrases (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) cur))))
 
 (define (make-boxes increment s)
   (for/fold ([boxes (state-boxes s)])
@@ -71,14 +71,13 @@
                            null
                            null
                            #hash()
-                           phrases-three
                            null
                            null)
                           (ortho
                            (array #[#["a" "b"] #["c" "d"]])
                            (array #[#["a"] #["c"]])
                            (array #[#["b"] #["d"]])
-                           (list (set "a") (set "b" "c") (set "d"))))
+                           (list (set "a") (set "b" "c") (set "d"))) phrases-three)
                 (state
                  (hash
                   (array #[#["a"] #["b"] #["e"]])
@@ -141,7 +140,6 @@
                     (array #[#["a" "b"] #["c" "d"]])
                     (array #[#["b" "e"] #["d" "f"]])
                     (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
-                 phrases-three
                  '()
                  (set
                   (ortho

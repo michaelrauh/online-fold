@@ -2,7 +2,7 @@
 (require "driver.rkt" math)
 
 ; assumption - input is at lowest volume for dimensionality (all 2s)
-(define (drive-up s cur)
+(define (drive-up s cur phrases)
   (define dims (vector->list (array-shape (ortho-data cur))))
   (define new-dims (cons 2 dims))
   (define increment (list->set (apply append (map rotations (combine (state-next s) (state-prev s) (state-boxes s) cur dims)))))
@@ -13,7 +13,7 @@
   (define rhs-center-to-ortho (for/fold ([centers (state-rhs-center-to-ortho s)])
                             ([box increment])
                     (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-raw s) (list->set increment)))
 (provide drive-up)
 
 (define (calculate-lhs-center arr)
@@ -66,12 +66,11 @@
                                    (array #[#["b"] #["d"]])
                                    (list (set "a") (set "b" "c") (set "d")))))
                            null
-                           null
                            null) (ortho
                                   (array #[#["a" "b"] #["c" "d"]])
                                   (array #[#["a"] #["c"]])
                                   (array #[#["b"] #["d"]])
-                                  (list (set "a") (set "b" "c") (set "d"))))
+                                  (list (set "a") (set "b" "c") (set "d"))) null)
                 (state
                  (hash
                   (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
@@ -155,7 +154,6 @@
                     (array #[#[#["a"] #["b"]] #[#["e"] #["f"]]])
                     (array #[#[#["c"] #["d"]] #[#["g"] #["h"]]])
                     (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
-                 '()
                  '()
                  (set
                   (ortho
