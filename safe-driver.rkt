@@ -51,7 +51,6 @@
 (define (input-strings s)
   (~>
    s
-   (string-replace _ "\n\n" " stringbreakingpoint ")
    (string-replace _ "." " stringbreakingpoint ")
    (string-split)
    (map (λ (s) (string-replace s #px"\\W" "")) _)
