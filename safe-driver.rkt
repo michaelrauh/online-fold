@@ -66,23 +66,39 @@
             (define step (safe-drive state (car input-strings)))
             (calculate (cdr input-strings) step))]))
 
-(define (make-empty-state)
-  (state #hash() #hash() #hash() #hash() #hash() (set) (list) (set)))
+(define (make-empty-state phrases)
+  (state #hash() #hash() #hash() #hash() #hash() phrases (list) (set)))
 
 (trace safe-drive)
 
-;(define wow (calculate (input-from-file) (make-empty-state)))
-;(displayln (state-boxes wow))
+(define (tails raw)
+   (if (= 1 (length raw))
+       (set raw)
+       (set-union (set raw) (tails (cdr raw)))))
+
+ (define (make-phrases raw)
+   (for/fold ([phrases (set)])
+             ([i (range 1 (add1 (length raw)))])
+     (set-union phrases (tails (take raw i)))))
+
+ (define (make-all-phrases input-strings)
+   (define clean (dropf input-strings (λ (x) (equal? x "stringbreakingpoint"))))
+     (if (empty? clean)
+         (set)
+          (let-values ([(start end) (splitf-at clean (λ (x) (not (equal? x "stringbreakingpoint"))))])
+         (set-union
+          (make-phrases start)
+          (make-all-phrases end)))))
 
 (module+ test
   ; a b c  g h i
   ; d e f  j k l
   
-  (require rackunit)
-  (define final-ortho (ortho (array #[#[#["a" "b" "c"] #["d" "e" "f"]] #[#["g" "h" "i"] #["j" "k" "l"]]]) (array #[#[#["a" "b"] #["d" "e"]] #[#["g" "h"] #["j" "k"]]]) (array #[#[#["b" "c"] #["e" "f"]] #[#["h" "i"] #["k" "l"]]]) (list (set "a") (set "d" "b" "g") (set "h" "c" "e" "j") (set "k" "i" "f") (set "l"))))
-  (define s (calculate (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f") (make-empty-state)))
-  (define ans-one (hash-ref (state-boxes s) '(2 2 3)))
-  (check-false (set-member? ans-one final-ortho))
-  (define final-state (calculate (input-strings "l") s))
-  (define ans-two (hash-ref (state-boxes final-state) '(2 2 3)))
-  (check-true (set-member? ans-two final-ortho)))
+   (require rackunit)
+   (define final-ortho (ortho (array #[#[#["a" "b" "c"] #["d" "e" "f"]] #[#["g" "h" "i"] #["j" "k" "l"]]]) (array #[#[#["a" "b"] #["d" "e"]] #[#["g" "h"] #["j" "k"]]]) (array #[#[#["b" "c"] #["e" "f"]] #[#["h" "i"] #["k" "l"]]]) (list (set "a") (set "d" "b" "g") (set "h" "c" "e" "j") (set "k" "i" "f") (set "l"))))
+   (define s (calculate (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f") (make-empty-state (make-all-phrases (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f l")))))
+   (define ans-one (hash-ref (state-boxes s) '(2 2 3) (set)))
+   (check-false (set-member? ans-one final-ortho))
+   (define final-state (calculate (input-strings "l") s))
+   (define ans-two (hash-ref (state-boxes final-state) '(2 2 3)))
+   (check-true (set-member? ans-two final-ortho)))

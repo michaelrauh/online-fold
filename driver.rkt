@@ -40,7 +40,6 @@
 (define (drive s cur)
   (define prev (last (state-raw s)))
   (define new-raw (append (state-raw s) (list cur)))
-  (define new-phrases (set-union (state-phrases s) (tails new-raw)))
   (define new-next (hash-update (state-next s) prev (λ (s) (set-add s cur)) (set)))
   (define new-prev (hash-update (state-prev s) cur (λ (s) (set-add s prev)) (set)))
   (define increment (make-boxes cur new-next new-prev))
@@ -51,7 +50,7 @@
                                         ([box increment])
                                 (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
   (define new-boxes (hash-update (state-boxes s) '(2 2) (λ (s) (set-union s increment)) (set)))
-  (state lhs-center-to-ortho rhs-center-to-ortho new-next new-prev new-boxes new-phrases new-raw increment))
+  (state lhs-center-to-ortho rhs-center-to-ortho new-next new-prev new-boxes (state-phrases s) new-raw increment))
 
 (define (tails raw)
   (if (= 1 (length raw))
@@ -127,7 +126,7 @@
                    (array #[#["a"] #["b"]])
                    (array #[#["c"] #["d"]])
                    (list (set "a") (set "b" "c") (set "d"))))))
-  (check-true (set-member? (state-phrases res) (list "a" "b" "c" "d" "a" "c" "b" "d")))
+  (check-true (set-member? (state-phrases res) (list "a" "b" "c" "d" "a" "c" "b")))
   (check-equal? (state-raw res) '("a" "b" "c" "d" "a" "c" "b" "d"))
   (check-equal? (state-increment res)
                 (set
