@@ -75,8 +75,6 @@
 (define (make-empty-state prev next phrases)
   (state #hash() #hash() next prev #hash() phrases (list) (set)))
 
-(trace safe-drive)
-
 (define (tails raw)
   (if (= 1 (length raw))
       (set raw)
@@ -127,9 +125,9 @@
                   #:combine set-union)))
 
 
-;(define s (calculate (input-words (read-file "example.txt")) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
-;(state-boxes s)
-;(hash-keys (state-boxes s))
+(define s (calculate (input-words (read-file "example.txt")) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
+(state-boxes s)
+(hash-keys (state-boxes s))
 (module+ test
   ; a b c  g h i
   ; d e f  j k l
