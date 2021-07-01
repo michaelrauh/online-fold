@@ -66,8 +66,8 @@
             (define step (safe-drive state (car input-strings)))
             (calculate (cdr input-strings) step))]))
 
-(define (make-empty-state next phrases)
-  (state #hash() #hash() next #hash() #hash() phrases (list) (set)))
+(define (make-empty-state prev next phrases)
+  (state #hash() #hash() next prev #hash() phrases (list) (set)))
 
 (trace safe-drive)
 
@@ -99,11 +99,27 @@
                     (make-all-nexts end)
                     #:combine set-union))))
 
+(define (make-all-prevs input-strings)
+  (define clean (dropf input-strings (λ (x) (equal? x "stringbreakingpoint"))))
+  (if (empty? clean)
+      (hash)
+      (let-values ([(start end) (splitf-at clean (λ (x) (not (equal? x "stringbreakingpoint"))))])
+        (hash-union (get-prevs start)
+                    (make-all-prevs end)
+                    #:combine set-union))))
+
 (define (get-nexts strs)
   (if (< (length strs) 2) (hash)
       (hash-union (hash (car strs) (set (cadr strs)))
                   (get-nexts (cdr strs))
                   #:combine set-union))) ; todo make this a fold, refactor repeats out, consider using hash union in other parts of code
+
+(define (get-prevs strs)
+  (if (< (length strs) 2) (hash)
+      (hash-union (hash (cadr strs) (set (car strs)))
+                  (get-prevs (cdr strs))
+                  #:combine set-union)))
+  
 
 (module+ test
   ; a b c  g h i
@@ -114,7 +130,7 @@
   (define partial-input (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f"))
   (define final-ortho (ortho (array #[#[#["a" "b" "c"] #["d" "e" "f"]] #[#["g" "h" "i"] #["j" "k" "l"]]]) (array #[#[#["a" "b"] #["d" "e"]] #[#["g" "h"] #["j" "k"]]]) (array #[#[#["b" "c"] #["e" "f"]] #[#["h" "i"] #["k" "l"]]]) (list (set "a") (set "d" "b" "g") (set "h" "c" "e" "j") (set "k" "i" "f") (set "l"))))
   
-  (define s (calculate partial-input (make-empty-state (make-all-nexts full-input) (make-all-phrases full-input))))
+  (define s (calculate partial-input (make-empty-state (make-all-prevs full-input) (make-all-nexts full-input) (make-all-phrases full-input))))
   
   (define ans-one (hash-ref (state-boxes s) '(2 2 3) (set)))
   (define final-state (calculate (input-strings "l") s))
