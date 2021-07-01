@@ -125,9 +125,9 @@
   ; a b c  g h i
   ; d e f  j k l
   
-  (require rackunit) ; todo add dots to input strings. remove repeats.
-  (define full-input (input-strings    "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f l"))
-  (define partial-input (input-strings "a b c d e f g h i j k l a d b e c f g j h k i l a g b h c i d j e k f"))
+  (require rackunit)
+  (define full-input (input-strings    "a b c. d e f. g h i. j k l. a d. b e. c f. g j. h k. i l. a g. b h. c i. d j. e k. f l."))
+  (define partial-input (input-strings "a b c. d e f. g h i. j k l. a d. b e. c f. g j. h k. i l. a g. b h. c i. d j. e k. f"))
   (define final-ortho (ortho (array #[#[#["a" "b" "c"] #["d" "e" "f"]] #[#["g" "h" "i"] #["j" "k" "l"]]]) (array #[#[#["a" "b"] #["d" "e"]] #[#["g" "h"] #["j" "k"]]]) (array #[#[#["b" "c"] #["e" "f"]] #[#["h" "i"] #["k" "l"]]]) (list (set "a") (set "d" "b" "g") (set "h" "c" "e" "j") (set "k" "i" "f") (set "l"))))
   
   (define s (calculate partial-input (make-empty-state (make-all-prevs full-input) (make-all-nexts full-input) (make-all-phrases full-input))))
