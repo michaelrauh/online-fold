@@ -38,7 +38,6 @@
 
 ; assumption - raw is nonempty. Only 2x2 are desired.
 (define (drive s cur)
-  (define new-raw (append (state-raw s) (list cur)))
   (define made-boxes (make-boxes cur (state-next s) (state-prev s)))
   (define known-boxes (hash-ref (state-boxes s) '(2 2) (set)))
   (define increment (list->set (filter-not (λ (x) (set-member? known-boxes x)) (set->list made-boxes))))
@@ -49,5 +48,5 @@
                                         ([box increment])
                                 (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
   (define new-boxes (hash-update (state-boxes s) '(2 2) (λ (s) (set-union s increment)) (set)))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) new-boxes (state-phrases s) new-raw increment)) ; todo stop passing constant parts of state back out
+  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) new-boxes (state-phrases s) (state-raw s) increment)) ; todo stop passing constant parts of state back out
 

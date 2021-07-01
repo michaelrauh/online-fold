@@ -127,21 +127,21 @@
                   #:combine set-union)))
 
 
-(define s (calculate (input-words (read-file "example.txt")) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
-(state-boxes s)
-(hash-keys (state-boxes s))
+;(define s (calculate (input-words (read-file "example.txt")) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
+;(state-boxes s)
+;(hash-keys (state-boxes s))
 (module+ test
   ; a b c  g h i
   ; d e f  j k l
   
   (require rackunit)
   (define full-input (input-strings    "a b c. d e f. g h i. j k l. a d. b e. c f. g j. h k. i l. a g. b h. c i. d j. e k. f l."))
-  (define partial-input (input-strings "a b c. d e f. g h i. j k l. a d. b e. c f. g j. h k. i l. a g. b h. c i. d j. e k. f"))
+  (define partial-input (input-words "a b c. d e f. g h i. j k l. a d. b e. c f. g j. h k. i l. a g. b h. c i. d j. e k. f"))
   (define final-ortho (ortho (array #[#[#["a" "b" "c"] #["d" "e" "f"]] #[#["g" "h" "i"] #["j" "k" "l"]]]) (array #[#[#["a" "b"] #["d" "e"]] #[#["g" "h"] #["j" "k"]]]) (array #[#[#["b" "c"] #["e" "f"]] #[#["h" "i"] #["k" "l"]]]) (list (set "a") (set "d" "b" "g") (set "h" "c" "e" "j") (set "k" "i" "f") (set "l"))))
   
   (define s (calculate partial-input (make-empty-state (make-all-prevs full-input) (make-all-nexts full-input) (make-all-phrases full-input))))
   
   (define ans-one (hash-ref (state-boxes s) '(2 2 3) (set)))
-  (define final-state (calculate (input-strings "l") s))
+  (define final-state (calculate (input-words "l") s))
   (define ans-two (hash-ref (state-boxes final-state) '(2 2 3)))
   (check-true (set-member? ans-two final-ortho)))
