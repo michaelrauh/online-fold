@@ -119,8 +119,11 @@
       (hash-union (hash (cadr strs) (set (car strs)))
                   (get-prevs (cdr strs))
                   #:combine set-union)))
-  
 
+
+(define s (calculate (input-from-file) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
+(state-boxes s)
+(hash-keys (state-boxes s))
 (module+ test
   ; a b c  g h i
   ; d e f  j k l
