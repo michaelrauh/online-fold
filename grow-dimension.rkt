@@ -3,7 +3,11 @@
 
 (define (drive-in s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
-  (define increment (make-increment s cur))
+
+  (define known-boxes (hash-ref (state-boxes s) dims (set)))
+  (define made-boxes (make-increment s cur))
+  (define increment (list->set (filter-not (λ (x) (set-member? known-boxes x)) (set->list made-boxes))))
+  
   (define lhs-center-to-ortho (for/fold ([centers (state-lhs-center-to-ortho s)])
                                         ([box increment])
                                 (hash-update centers (ortho-lhs-center box) (λ (s) (set-add s box)) (set))))
