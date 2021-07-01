@@ -106,8 +106,3 @@
 
 (define (make-boxes word next prev)
   (list->set (set-map (smash word next prev) grab)))
-
-; a b
-; c d
-
-; a b c d a c b d

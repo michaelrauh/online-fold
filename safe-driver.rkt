@@ -1,5 +1,5 @@
 #lang racket
-(require "driver.rkt" 2htdp/batch-io threading racket/trace math profile "grow-dimension.rkt" "up-dimension.rkt" racket/hash)
+(require "driver.rkt" 2htdp/batch-io threading math "grow-dimension.rkt" "up-dimension.rkt" racket/hash)
 (provide calculate input-strings make-empty-state)
 
 ; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks. Broken phrases are not desired in output.
@@ -73,7 +73,7 @@
             (calculate (cdr input-strings) step))]))
 
 (define (make-empty-state prev next phrases)
-  (state #hash() #hash() next prev #hash() phrases (list) (set)))
+  (state #hash() #hash() next prev #hash() phrases (set)))
 
 (define (tails raw)
   (if (= 1 (length raw))
@@ -128,6 +128,7 @@
 (define s (calculate (input-words (read-file "example.txt")) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
 (state-boxes s)
 (hash-keys (state-boxes s))
+
 (module+ test
   ; a b c  g h i
   ; d e f  j k l

@@ -15,7 +15,7 @@
   (define rhs-center-to-ortho (for/fold ([centers (state-rhs-center-to-ortho s)])
                             ([box increment])
                     (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (list->set increment)))
 (provide drive-up)
 
 (define (calculate-lhs-center arr)
@@ -309,10 +309,3 @@
                  (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
                  (array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
                  (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
-
-
-; a b   e f
-; c d   g h
-
-; 0 1  1 2
-; 1 2  2 3

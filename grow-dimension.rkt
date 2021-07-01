@@ -1,5 +1,5 @@
 #lang racket
-(require "driver.rkt" math racket/trace)
+(require "driver.rkt" math)
 
 (define (drive-in s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
@@ -15,7 +15,7 @@
                                         ([box increment])
                                 (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
   (define boxes (make-boxes increment s))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (list->set increment)))
 (provide drive-in)
 
 (define (make-increment s cur)
@@ -30,10 +30,6 @@
   (define arr-to-ortho ((curry r2o) o))
   (define arrs (rots (ortho-data o)))
   (cons o (map arr-to-ortho arrs)))
-
-(define (calculate-center-local-dims dims)
-  (define almost (map (λ (x) (range x)) (vector->list dims)))
-  (list-update almost (sub1 (length almost)) cdr))
 
 (define (r2o o arr)
   (ortho arr (calculate-lhs-center arr) (calculate-rhs-center arr) (ortho-diagonals o)))
@@ -253,12 +249,6 @@
     (array #[#["a" "b"] #["c" "d"]])
     (array #[#["b" "e"] #["d" "f"]])
     (list (set "a") (set "b" "c") (set "d" "e") (set "f")))))
-
-; a b  b e
-; c d  d f
-
-; a b e
-; c d f
 
 (define (get-phrases arr)
   (define dims (vector->list (array-shape arr)))
