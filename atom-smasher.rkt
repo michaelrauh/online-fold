@@ -22,7 +22,8 @@
         (hash2-recur (res-b a))
         (hash2-recur (res-c a))
         (hash2-recur (res-d a))))])
-(struct ortho (data lhs-center rhs-center diagonals) #:methods
+(struct ortho (data lhs-center rhs-center diagonals) #:transparent ; todo opaque
+  #:methods
   gen:equal+hash
   [(define (equal-proc a b equal?-recur)
      ; compare a and b

@@ -1,7 +1,7 @@
 #lang racket
 
 (require "atom-smasher.rkt" math)
-(struct state (lhs-center-to-ortho rhs-center-to-ortho next prev boxes phrases raw increment)
+(struct state (lhs-center-to-ortho rhs-center-to-ortho next prev boxes phrases raw increment) ; todo move structs, remove unused methods
   #:methods
   gen:equal+hash
   [(define (equal-proc a b equal?-recur)
@@ -40,9 +40,8 @@
 (define (drive s cur)
   (define prev (last (state-raw s)))
   (define new-raw (append (state-raw s) (list cur)))
-  (define new-next (hash-update (state-next s) prev (λ (s) (set-add s cur)) (set)))
   (define new-prev (hash-update (state-prev s) cur (λ (s) (set-add s prev)) (set)))
-  (define increment (make-boxes cur new-next new-prev))
+  (define increment (make-boxes cur (state-next s) new-prev))
   (define lhs-center-to-ortho (for/fold ([centers (state-lhs-center-to-ortho s)])
                                         ([box increment])
                                 (hash-update centers (ortho-lhs-center box) (λ (s) (set-add s box)) (set))))
@@ -50,7 +49,7 @@
                                         ([box increment])
                                 (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
   (define new-boxes (hash-update (state-boxes s) '(2 2) (λ (s) (set-union s increment)) (set)))
-  (state lhs-center-to-ortho rhs-center-to-ortho new-next new-prev new-boxes (state-phrases s) new-raw increment))
+  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) new-prev new-boxes (state-phrases s) new-raw increment)) ; todo stop passing constant parts of state back out
 
 (define (tails raw)
   (if (= 1 (length raw))
