@@ -38,7 +38,6 @@
 
 ; assumption - raw is nonempty. Only 2x2 are desired.
 (define (drive s cur)
-  (define prev (last (state-raw s)))
   (define new-raw (append (state-raw s) (list cur)))
   (define made-boxes (make-boxes cur (state-next s) (state-prev s)))
   (define known-boxes (hash-ref (state-boxes s) '(2 2) (set)))

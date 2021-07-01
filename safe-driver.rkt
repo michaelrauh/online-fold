@@ -4,10 +4,7 @@
 
 ; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks. Broken phrases are not desired in output.
 (define (safe-drive s cur)
-  (cond
-    [(equal? "stringbreakingpoint" cur) (state (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (list) (set))]
-    [(empty? (state-raw s)) (state (state-lhs-center-to-ortho s) (state-rhs-center-to-ortho s) (state-next s) (state-prev s) (state-boxes s) (state-phrases s) (append (state-raw s) (list cur)) (set))]
-    [else (process s cur)]))
+  (process s cur))
 
 (define (process s cur)
   (define base-state (drive s cur))
@@ -55,6 +52,15 @@
    (string-split)
    (map (λ (s) (string-replace s #px"\\W" "")) _)
    (map string-downcase _)))
+
+(define (input-words s)
+  (~>
+   s
+   (string-split)
+   (map (λ (s) (string-replace s #px"\\W" "")) _)
+   (map string-downcase _)
+   (remove-duplicates _)
+   (sort _ string<?)))
 
 (define (input-from-file)
   (input-strings (read-file "example.txt")))
@@ -121,7 +127,7 @@
                   #:combine set-union)))
 
 
-(define s (calculate (input-from-file) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
+(define s (calculate (input-words (read-file "example.txt")) (make-empty-state (make-all-prevs (input-from-file)) (make-all-nexts (input-from-file)) (make-all-phrases (input-from-file)))))
 (state-boxes s)
 (hash-keys (state-boxes s))
 (module+ test
