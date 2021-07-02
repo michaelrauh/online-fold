@@ -1,5 +1,5 @@
 #lang racket
-(require "driver.rkt" 2htdp/batch-io threading math "grow-dimension.rkt" "up-dimension.rkt" racket/hash)
+(require "driver.rkt" 2htdp/batch-io threading math "grow-dimension.rkt" "up-dimension.rkt" racket/hash racket/trace)
 (provide calculate input-strings make-empty-state)
 
 ; assumption - stringbreakingpoint does not occur in any real text. Phrases terminate at text breaks. Broken phrases are not desired in output.
@@ -138,6 +138,21 @@
   (define phrases (set-union (state-phrases s1) (state-phrases s2)))
   (define increment (set))
   (state lhs-center-to-ortho rhs-center-to-ortho next prev boxes phrases increment))
+
+(define (calculator filename)
+  (define contents (read-file filename))
+  (define words (input-words contents))
+  (define strings (input-strings (read-file filename)))
+  (define seeded-state (make-empty-state (make-all-prevs strings) (make-all-nexts strings) (make-all-phrases strings)))
+  (calculate words seeded-state))
+
+(define (merge-run f1 f2)
+  (define s (merge (calculator f1) (calculator f2)))
+  (calculate (append (input-words (read-file f1)) (input-words (read-file f2))) s)) ; todo make appended input words sorted and unique
+
+(trace safe-drive)
+(merge-run "example1.txt" "example2.txt")
+
   
 (module+ test
   ; a b c  g h i
