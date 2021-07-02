@@ -148,7 +148,7 @@
 
 (define (merge-run f1 f2)
   (define s (merge (calculator f1) (calculator f2)))
-  (calculate (append (input-words (read-file f1)) (input-words (read-file f2))) s)) ; todo make appended input words sorted and unique
+  (calculate (sort (remove-duplicates (append (input-words (read-file f1)) (input-words (read-file f2)))) string<?) s))
 
 (trace safe-drive)
 (merge-run "example1.txt" "example2.txt")
