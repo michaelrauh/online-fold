@@ -5,7 +5,9 @@
 (define (drive-up s cur)
   (define dims (vector->list (array-shape (ortho-data cur))))
   (define new-dims (cons 2 dims))
-  (define increment (list->set (apply append (map rotations (combine (state-next s) (state-prev s) (state-boxes s) cur dims)))))
+  (define known-boxes (hash-ref (state-boxes s) new-dims (set)))
+  (define made-boxes (list->set (apply append (map rotations (combine (state-next s) (state-prev s) (state-boxes s) cur dims)))))
+  (define increment (list->set (filter-not (λ (x) (set-member? known-boxes x)) (set->list made-boxes))))
   (define boxes (hash-update (state-boxes s) new-dims (λ (s) (set-union s increment)) (set)))
   (define lhs-center-to-ortho (for/fold ([centers (state-lhs-center-to-ortho s)])
                             ([box increment])
@@ -13,7 +15,7 @@
   (define rhs-center-to-ortho (for/fold ([centers (state-rhs-center-to-ortho s)])
                             ([box increment])
                     (hash-update centers (ortho-rhs-center box) (λ (s) (set-add s box)) (set))))
-  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (state-raw s) (list->set increment)))
+  (state lhs-center-to-ortho rhs-center-to-ortho (state-next s) (state-prev s) boxes (state-phrases s) (list->set increment)))
 (provide drive-up)
 
 (define (calculate-lhs-center arr)
@@ -307,10 +309,3 @@
                  (array #[#[#["a"] #["c"]] #[#["e"] #["g"]]])
                  (array #[#[#["b"] #["d"]] #[#["f"] #["h"]]])
                  (list (set "a") (set "b" "c" "e") (set "d" "f" "g") (set "h")))))
-
-
-; a b   e f
-; c d   g h
-
-; 0 1  1 2
-; 1 2  2 3
