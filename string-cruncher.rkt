@@ -24,6 +24,22 @@
      (hash (cdr tup) (set (car tup)))
      #:combine set-union)))
 
+(define (dict-add d l)
+  (if (empty? l)
+      d
+      (hash-union d
+                  (hash (car l) (dict-add (hash-ref d (car l) (hash)) (cdr l)))
+                  #:combine (λ (a b) (rec-union a b)))))
+
+(define (rec-union l r)
+  (hash-union l r
+              #:combine (λ (a b) (rec-union a b))))
+
+(define (phrases s)
+  (for/fold ([d (hash)])
+            ([l (map reverse (clean-sentences s))])
+    (dict-add d l)))
+
 (module+ test
   (require rackunit)
   (check-equal?
@@ -31,4 +47,7 @@
    (hash "a" (set "b" "c") "b" (set "c") "c" (set "a") "d" (set "e")))
   (check-equal?
    (prevs "a b c a c. d e")
-   (hash "a" (set "c") "b" (set "a") "c" (set "b" "a") "e" (set "d"))))
+   (hash "a" (set "c") "b" (set "a") "c" (set "b" "a") "e" (set "d")))
+  (check-equal?
+   (phrases "a b c d. a b e d.")
+   '#hash(("d" . #hash(("c" . #hash(("b" . #hash(("a" . #hash()))))) ("e" . #hash(("b" . #hash(("a" . #hash()))))))))))
