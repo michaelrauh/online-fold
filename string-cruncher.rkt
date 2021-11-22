@@ -1,5 +1,6 @@
 #lang racket
 (require "cleaner.rkt" racket/hash)
+(provide nexts prevs phrases vocab)
 
 (define (make-sliding-tuple s)
   (apply append (map zip (clean-sentences s))))
@@ -40,6 +41,9 @@
             ([l (map reverse (clean-sentences s))])
     (dict-add d l)))
 
+(define (vocab s)
+  (apply set-union (map list->set (clean-sentences s))))
+
 (module+ test
   (require rackunit)
   (check-equal?
@@ -50,4 +54,7 @@
    (hash "a" (set "c") "b" (set "a") "c" (set "b" "a") "e" (set "d")))
   (check-equal?
    (phrases "a b c d. a b e d.")
-   '#hash(("d" . #hash(("c" . #hash(("b" . #hash(("a" . #hash()))))) ("e" . #hash(("b" . #hash(("a" . #hash()))))))))))
+   '#hash(("d" . #hash(("c" . #hash(("b" . #hash(("a" . #hash()))))) ("e" . #hash(("b" . #hash(("a" . #hash())))))))))
+  (check-equal?
+   (vocab "a b c d. a b e d.")
+   (set "d" "e" "b" "c" "a")))
