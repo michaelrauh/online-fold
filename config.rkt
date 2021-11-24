@@ -4,11 +4,11 @@
 
 (struct config (next prev phrase vocab))
 
-(define (project-forward c o)
-  5)
+(define (project-forward c o) 
+  (hash-ref (config-next c) o (set)))
 
 (define (project-backward c o)
-  9)
+  (hash-ref (config-prev c) o (set)))
 
 (define (make-config s)
   (config
@@ -72,4 +72,9 @@
    '#hash(("d" . #hash(("c" . #hash(("b" . #hash(("a" . #hash()))))) ("e" . #hash(("b" . #hash(("a" . #hash())))))))))
   (check-equal?
    (vocab "a b c d. a b e d.")
-   (set "d" "e" "b" "c" "a")))
+   (set "d" "e" "b" "c" "a"))
+  (define config (make-config "a b a c. d b e d."))
+  (check-equal? (project-forward config "a")
+                (set "b" "c"))
+  (check-equal? (project-backward config "b")
+                (set "a" "d")))
