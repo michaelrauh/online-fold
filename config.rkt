@@ -1,6 +1,21 @@
 #lang racket
 (require "cleaner.rkt" racket/hash)
-(provide nexts prevs phrases vocab)
+(provide make-config project-forward project-backward)
+
+(struct config (next prev phrase vocab))
+
+(define (project-forward c o)
+  5)
+
+(define (project-backward c o)
+  9)
+
+(define (make-config s)
+  (config
+   (nexts s)
+   (prevs s)
+   (phrases s)
+   (vocab s)))
 
 (define (make-sliding-tuple s)
   (apply append (map zip (clean-sentences s))))
