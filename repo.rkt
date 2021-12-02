@@ -1,11 +1,14 @@
 #lang racket
 (require "ortho.rkt" racket/hash)
-(provide make-repo add-ortho find-by-size-and-origin find-by-size-and-hop)
+(provide make-repo add-ortho find-by-size-and-origin find-by-size-and-hop repo-set-subtract)
 
 (struct repo (origins hops))
 
 (define (make-repo)
   (repo (hash) (hash)))
+
+(define (repo-set-subtract l)
+  1)
 
 (define (add-ortho r o)
   (define size-to-insert (ortho-size o))
