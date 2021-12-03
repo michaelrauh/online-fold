@@ -29,7 +29,7 @@
     (hash-ref mapping loc)))
 
 (define (ortho-location-pairs o)
-  1) ; return list of name, location pairs
+  (set-map (apply set-union o) (λ (n) (cons (node-name n) (node-location n)))))
 
 (define (ortho-origin o)
   (~>
@@ -66,4 +66,5 @@
   (check-equal? (ortho-not-hops-or-origin ortho) (list (set (node "d" (multiset "c" "b")))))
   (check-equal? (ortho-get-names-in-buckets ortho) (list (set "a") (set "b" "c") (set "d")))
   (check-equal? (ortho-name-at-location ortho (multiset "b" "c")) "d")
-  (check-equal? (ortho-location-translate (multiset "a" "b") (hash "a" "c" "b" "d")) (multiset "c" "d")))
+  (check-equal? (ortho-location-translate (multiset "a" "b") (hash "a" "c" "b" "d")) (multiset "c" "d"))
+  (check-equal? (ortho-location-pairs ortho) (list (cons "c" (multiset "c")) (cons "b" (multiset "b")) (cons "a" (multiset)) (cons "d" (multiset "c" "b")))))
