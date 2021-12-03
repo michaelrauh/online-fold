@@ -7,8 +7,13 @@
 (define (make-repo)
   (repo (hash) (hash)))
 
-(define (repo-set-subtract l)
-  1)
+(define (repo-set-subtract r l)
+  (filter (λ (o) (not (ortho-in-repo r o))) l))
+
+(define (ortho-in-repo r o)
+  (define possibles (find-by-size-and-origin r (ortho-size o) (ortho-origin o)))
+  (for/or ([other possibles])
+    (equal? o other)))
 
 (define (add-ortho r o)
   (define size-to-insert (ortho-size o))
@@ -40,6 +45,7 @@
   (define size (ortho-size ortho))
   (define origin (ortho-origin ortho))
   (define hops (ortho-hops ortho))
+  (define other-ortho (make-ortho "x" "y" "z" "b"))
   
   (check-equal? (find-by-size-and-origin repo size origin)
                 (set))
@@ -48,4 +54,7 @@
   (check-equal? (find-by-size-and-hop added size (set-first hops))
                 (set ortho))
   (check-equal? (find-by-size-and-hop repo size (set-first hops))
-                (set)))
+                (set))
+  (check-equal? (repo-set-subtract added (list ortho other-ortho))
+                (list other-ortho)))
+                

@@ -2,7 +2,7 @@
 (require "config.rkt" "ortho.rkt" "repo.rkt" racket/hash threading)
 
 (define (fold-up config repo ortho)
-  (apply set (repo-set-subtract (find-forwards config repo ortho)) (repo-set-subtract (find-backwards config repo ortho))))
+  (apply set (repo-set-subtract repo (find-forwards config repo ortho)) (repo-set-subtract repo (find-backwards config repo ortho))))
 
 (define (find-forwards config repo ortho)
   (define potential-forwards (find-by-size-and-origin repo (ortho-size ortho) (project-forward config (ortho-origin ortho))))
