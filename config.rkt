@@ -2,7 +2,24 @@
 (require "cleaner.rkt" racket/hash)
 (provide make-config project-forward project-backward)
 
-(struct config (next prev phrase vocab))
+(struct config (next prev phrase vocab)
+  #:methods
+  gen:equal+hash
+  [(define (equal-proc a b equal?-recur)
+     (and (equal?-recur (config-next a) (config-next b))
+          (equal?-recur (config-prev a) (config-prev b))
+          (equal?-recur (config-phrase a) (config-phrase b))
+          (equal?-recur (config-vocab a) (config-vocab b))))
+   (define (hash-proc a hash-recur)
+     (+ (hash-recur (config-next a))
+        (* 3 (hash-recur (config-prev a)))
+        (* 5 (hash-recur (config-phrase a)))
+        (* 7 (hash-recur (config-vocab a)))))
+   (define (hash2-proc a hash2-recur)
+     (+ (hash2-recur (config-next a))
+        (hash2-recur (config-prev a))
+        (hash2-recur (config-phrase a))
+        (hash2-recur (config-vocab a))))])
 
 (define (project-forward c o) 
   (hash-ref (config-next c) o (set)))
@@ -61,20 +78,24 @@
 
 (module+ test
   (require rackunit)
+  (define conf (make-config "a b c. b e"))
   (check-equal?
-   (nexts "a b c a c. d e")
-   (hash "a" (set "b" "c") "b" (set "c") "c" (set "a") "d" (set "e")))
+   conf
+   (config
+    (hash "a" (set "b") "b" (set "e" "c"))
+    (hash "b" (set "a") "c" (set "b") "e" (set "b"))
+    '#hash(("c" . #hash(("b" . #hash(("a" . #hash())))))
+           ("e" . #hash(("b" . #hash()))))
+    (set "e" "b" "c" "a")))
   (check-equal?
-   (prevs "a b c a c. d e")
-   (hash "a" (set "c") "b" (set "a") "c" (set "b" "a") "e" (set "d")))
+   (project-forward conf "a")
+   (set "b"))
   (check-equal?
-   (phrases "a b c d. a b e d.")
-   '#hash(("d" . #hash(("c" . #hash(("b" . #hash(("a" . #hash()))))) ("e" . #hash(("b" . #hash(("a" . #hash())))))))))
+   (project-forward conf "z")
+   (set))
   (check-equal?
-   (vocab "a b c d. a b e d.")
-   (set "d" "e" "b" "c" "a"))
-  (define config (make-config "a b a c. d b e d."))
-  (check-equal? (project-forward config "a")
-                (set "b" "c"))
-  (check-equal? (project-backward config "b")
-                (set "a" "d")))
+   (project-backward conf "b")
+   (set "a"))
+  (check-equal?
+   (project-backward conf "z")
+   (set)))
