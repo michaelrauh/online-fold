@@ -1,11 +1,12 @@
-#lang racket
+#lang typed/racket
 (require threading)
 
+(: clean-sentences (-> String (Listof (Listof String))))
 (define (clean-sentences s)
-  (define sentences (string-split s #px"\\.|\\?|\\!"))
-  (map (compose1 string-split clean) sentences))
+  (map (compose1 string-split clean) (string-split s #px"\\.|\\?|\\!")))
 (provide clean-sentences)
 
+(: clean (-> String String))
 (define (clean s)
   (~>
    s
@@ -15,5 +16,5 @@
 
 
 (module+ test
-  (require rackunit)
+  (require typed/rackunit)
   (check-equal? (clean-sentences "A \n\tb ,; ' : c? D e! F g.") '(("a" "b" "c") ("d" "e") ("f" "g"))))
