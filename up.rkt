@@ -5,13 +5,13 @@
   (apply set (repo-set-subtract repo (find-forwards config repo ortho)) (repo-set-subtract repo (find-backwards config repo ortho))))
 
 (define (find-forwards config repo ortho)
-  (define potential-forwards (find-by-size-and-origin repo (ortho-size ortho) (project-forward config (ortho-origin ortho))))
-  (~>
-   potential-forwards
-   (make-corrs _ config ortho)
-   (ungroup potential-forwards _ null)
-   (filter (λ (corr) (check-projection config ortho corr)) _)
-   (filter (λ (corr) (check-diagonals ortho corr)) _)))
+  (define potential-forwards (set-union (for/set ([origin-to-search (project-forward config (ortho-origin ortho))])
+                               (find-by-size-and-origin repo (ortho-size ortho) origin-to-search))))
+  (define corrs (make-corrs potential-forwards config ortho))
+  (define better-corrs (ungroup potential-forwards corrs null))
+  (define projects (filter (λ (corr) (check-projection config ortho corr)) better-corrs))
+  (define found (filter (λ (corr) (check-diagonals ortho corr)) projects))
+  (map (λ (right) (ortho-zip-up ortho right better-corrs)) found))
 
 (define (check-diagonals ortho corr)
   (define potential-forward (car corr))
@@ -74,5 +74,7 @@
   (require rackunit)
   (define ortho-l (make-ortho "a" "b" "c" "d"))
   (define ortho-r (make-ortho "e" "f" "g" "h"))
-  (check-equal? (fold-up (make-config "a b. c d. a c. b d. e f. g h. e g. f h. a e. b f. c g. d h.") (make-repo (list ortho-l)) ortho-r)
-                (ortho-zip-up ortho-l ortho-r (hash "a" "e" "b" "f" "c" "g" "d" "h"))))
+  (define config (make-config "a b. c d. a c. b d. e f. g h. e g. f h. a e. b f. c g. d h."))
+  (define repo (make-repo (list ortho-r)))
+  (check-equal? (fold-up config repo ortho-l)
+                (list (ortho-zip-up ortho-l ortho-r (hash "a" "e" "b" "f" "c" "g" "d" "h")))))
