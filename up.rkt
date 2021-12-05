@@ -69,3 +69,10 @@
                                                              (hash-union acc
                                                                          (hash (car (car ppair)) (car forward))))]
     [else #f]))
+
+(module+ test
+  (require rackunit)
+  (define ortho-l (make-ortho "a" "b" "c" "d"))
+  (define ortho-r (make-ortho "e" "f" "g" "h"))
+  (check-equal? (fold-up (make-config "a b. c d. a c. b d. e f. g h. e g. f h. a e. b f. c g. d h.") (make-repo (list ortho-l)) ortho-r)
+                (ortho-zip-up ortho-l ortho-r (hash "a" "e" "b" "f" "c" "g" "d" "h"))))

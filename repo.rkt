@@ -4,8 +4,11 @@
 
 (struct repo (origins hops))
 
-(define (make-repo)
-  (repo (hash) (hash)))
+(define (make-repo [l (list)])
+  (define empty-repo (repo (hash) (hash)))
+  (for/fold ([repo empty-repo])
+            ([x l])
+    (add-ortho repo x)))
 
 (define (repo-set-subtract r l)
   (filter (λ (o) (not (ortho-in-repo r o))) l))

@@ -1,9 +1,9 @@
 #lang racket
 
 (require rebellion/collection/multiset threading)
-(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets)
+(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up)
 
-(struct node (name location)
+(struct node (name location) #:transparent
   #:methods
   gen:equal+hash
   [(define (equal-proc a b equal?-recur)
@@ -22,7 +22,7 @@
 (define (ortho-name-at-location ortho location)
   (for/first ([item (list-ref ortho (multiset-size location))]
               #:when (equal? (node-location item) location))
-     (node-name item)))
+    (node-name item)))
 
 (define (ortho-location-translate location mapping)
   (for/multiset ([loc (in-multiset location)])
@@ -55,10 +55,35 @@
 (define (ortho-not-hops-or-origin o)
   (cdr (cdr o)))
 
+(define (map-ortho-locations o mapping)
+  (for/list ([s o])
+    (for/set ([n s])
+      (node (node-name n) (ortho-location-translate (node-location n) mapping)))))
+
+(define (shift-ortho new-axis o)
+  (cons (set)
+        (for/list ([s o])
+          (for/set ([n s])
+            (node (node-name n) (multiset-add (node-location n) new-axis))))))
+
+(define (hash-reverse mapping)
+  (make-hash (map swap (hash->list mapping))))
+
+(define (swap p)
+  (cons (cdr p) (car p)))
+
+(define (ortho-zip-up l r mapping)
+  (define translated (map-ortho-locations r (hash-reverse mapping)))
+  (define augmented (shift-ortho (ortho-origin r) translated))
+  (for/list ([left-set (append l (list (set)))]
+             [right-set augmented])
+    (set-union left-set right-set)))
+
 (module+ test
   (require rackunit)
   (define ortho (make-ortho "a" "b" "c" "d"))
   (define ortho2 (make-ortho "a" "c" "b" "d"))
+  (define ortho3 (make-ortho "e" "f" "g" "h"))
   (check-equal? ortho ortho2)
   (check-equal? (ortho-origin ortho) "a")
   (check-equal? (ortho-size ortho) (multiset 1 1))
@@ -67,4 +92,6 @@
   (check-equal? (ortho-get-names-in-buckets ortho) (list (set "a") (set "b" "c") (set "d")))
   (check-equal? (ortho-name-at-location ortho (multiset "b" "c")) "d")
   (check-equal? (ortho-location-translate (multiset "a" "b") (hash "a" "c" "b" "d")) (multiset "c" "d"))
-  (check-equal? (ortho-location-pairs ortho) (list (cons "c" (multiset "c")) (cons "b" (multiset "b")) (cons "a" (multiset)) (cons "d" (multiset "c" "b")))))
+  (check-equal? (apply set (ortho-location-pairs ortho)) (apply set (list (cons "c" (multiset "c")) (cons "b" (multiset "b")) (cons "a" (multiset)) (cons "d" (multiset "c" "b")))))
+  (check-equal? (ortho-zip-up ortho ortho3 (hash "a" "e" "b" "f" "c" "g" "d" "h"))
+                (list (set (node "a" (multiset))) (set (node "e" (multiset "e")) (node "b" (multiset "b")) (node "c" (multiset "c"))) (set (node "g" (multiset "e" "c")) (node "f" (multiset "e" "b")) (node "d" (multiset "c" "b"))) (set (node "h" (multiset "e" "c" "b"))))))
