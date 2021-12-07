@@ -1,101 +1,116 @@
-#lang racket
-(require "cleaner.rkt" racket/hash)
-(provide make-config project-forward project-backward)
+#lang typed/racket
+(require "cleaner.rkt")
 
-(struct config (next prev phrase vocab)
-  #:methods
-  gen:equal+hash
-  [(define (equal-proc a b equal?-recur)
-     (and (equal?-recur (config-next a) (config-next b))
-          (equal?-recur (config-prev a) (config-prev b))
-          (equal?-recur (config-phrase a) (config-phrase b))
-          (equal?-recur (config-vocab a) (config-vocab b))))
-   (define (hash-proc a hash-recur)
-     (+ (hash-recur (config-next a))
-        (* 3 (hash-recur (config-prev a)))
-        (* 5 (hash-recur (config-phrase a)))
-        (* 7 (hash-recur (config-vocab a)))))
-   (define (hash2-proc a hash2-recur)
-     (+ (hash2-recur (config-next a))
-        (hash2-recur (config-prev a))
-        (hash2-recur (config-phrase a))
-        (hash2-recur (config-vocab a))))])
+(require/typed racket/hash
+               [(hash-union fanout-union) ([(Immutable-HashTable String (Setof String))]
+                                           [#:combine ((Setof String) (Setof String) → (Setof String))]
+                                           #:rest (Immutable-HashTable String (Setof String))
+                                           . ->* .
+                                           (Immutable-HashTable String (Setof String)))])
 
-(define (project-forward c o) 
-  (hash-ref (config-next c) o (set)))
+(require/typed racket/hash
+               [(hash-union nested-union) ([Nested-HashTable]
+                                           [#:combine (Nested-HashTable Nested-HashTable → Nested-HashTable)]
+                                           #:rest Nested-HashTable
+                                           . ->* .
+                                           Nested-HashTable)])
 
-(define (project-backward c o)
-  (hash-ref (config-prev c) o (set)))
+;(provide make-config project-forward project-backward)
 
-(define (make-config s)
-  (config
-   (nexts s)
-   (prevs s)
-   (phrases s)
-   (vocab s)))
+(define-type Nested-HashTable (U (Immutable-HashTable Any Any) (Immutable-HashTable String Nested-HashTable)))
 
+(struct config ([next : (Immutable-HashTable String (Setof String))] [prev : (Immutable-HashTable String (Setof String))] [phrase : Nested-HashTable] [vocab : (Setof String)])
+  #:transparent)
+
+(: project-forward (config String  -> (Setof String)))
+(define (project-forward c s)
+  (hash-ref (config-next c) s (λ () ((inst set String)))))
+
+;(define (make-config s)
+;  (config
+;   (nexts s)
+;   (prevs s)
+;   (phrases s)
+;   (vocab s)))
+
+(: make-sliding-tuple (String -> (Listof (Pairof String String))))
 (define (make-sliding-tuple s)
   (apply append (map zip (clean-sentences s))))
 
+(: zip ((Listof String) -> (Listof (Pairof String String))))
 (define (zip x)
-  (for/list ([i x] [j (cdr x)])
-    (cons i j)))
+  (if (empty? x)
+      null
+      (for/list ([i (in-list x)] [j (in-list (cdr x))])
+        (cons i j))))
 
+(: nexts (String -> (HashTable String (Setof String))))
 (define (nexts s)
-  (for/fold ([acc (make-immutable-hash)])
-            ([tup (make-sliding-tuple s)])
-    (hash-union
-     acc
+  (for/fold ([acc ((inst hash String (Setof String)))])
+            ([tup (in-list (make-sliding-tuple s))])
+    (fanout-union
      (hash (car tup) (set (cdr tup)))
-     #:combine set-union)))
-
-(define (prevs s)
-  (for/fold ([acc (make-immutable-hash)])
-            ([tup (make-sliding-tuple s)])
-    (hash-union
      acc
-     (hash (cdr tup) (set (car tup)))
      #:combine set-union)))
 
+(: prevs (String -> (HashTable String (Setof String))))
+(define (prevs s)
+  (for/fold ([acc ((inst hash String (Setof String)))])
+            ([tup (in-list (make-sliding-tuple s))])
+    (fanout-union
+     (hash (cdr tup) (set (car tup)))
+     acc
+     #:combine set-union)))
+
+(: dict-add (Nested-HashTable (Listof String) -> Nested-HashTable))
 (define (dict-add d l)
   (if (empty? l)
       d
-      (hash-union d
-                  (hash (car l) (dict-add (hash-ref d (car l) (hash)) (cdr l)))
-                  #:combine (λ (a b) (rec-union a b)))))
+      (nested-union d
+                    (hash (car l) (dict-add (layer-down d (car l)) (cdr l)))
+                    #:combine (λ (a b) (rec-union a b)))))
 
+(: layer-down (Nested-HashTable String -> HashTable))
+(define (layer-down d s)
+  (if (hash-has-key? d s)
+      (hash-ref d s)
+      (inst hash Any Any)))
+
+(hash-ref (hash "a" "b") "x" (λ () "c"))
+
+(: rec-union (Nested-HashTable Nested-HashTable -> Nested-HashTable))
 (define (rec-union l r)
-  (hash-union l r
-              #:combine (λ (a b) (rec-union a b))))
+  (nested-union l r
+                #:combine (λ (a b) (rec-union a b))))
 
-(define (phrases s)
-  (for/fold ([d (hash)])
-            ([l (map reverse (clean-sentences s))])
-    (dict-add d l)))
+;(define (phrases s)
+;  (for/fold ([d (hash)])
+;            ([l (map reverse (clean-sentences s))])
+;    (dict-add d l)))
 
-(define (vocab s)
-  (apply set-union (map list->set (clean-sentences s))))
+;(define (vocab s)
+;  (apply set-union (map list->set (clean-sentences s))))
 
-(module+ test
-  (require rackunit)
-  (define conf (make-config "a b c. b e"))
-  (check-equal?
-   conf
-   (config
-    (hash "a" (set "b") "b" (set "e" "c"))
-    (hash "b" (set "a") "c" (set "b") "e" (set "b"))
-    '#hash(("c" . #hash(("b" . #hash(("a" . #hash())))))
-           ("e" . #hash(("b" . #hash()))))
-    (set "e" "b" "c" "a")))
-  (check-equal?
-   (project-forward conf "a")
-   (set "b"))
-  (check-equal?
-   (project-forward conf "z")
-   (set))
-  (check-equal?
-   (project-backward conf "b")
-   (set "a"))
-  (check-equal?
-   (project-backward conf "z")
-   (set)))
+;(module+ test
+;  (require rackunit)
+;  (define conf (make-config "a b c. b e"))
+;  (check-equal?
+;   conf
+;   (config
+;    (hash "a" (set "b") "b" (set "e" "c"))
+;    (hash "b" (set "a") "c" (set "b") "e" (set "b"))
+;    '#hash(("c" . #hash(("b" . #hash(("a" . #hash())))))
+;           ("e" . #hash(("b" . #hash()))))
+;    (set "e" "b" "c" "a")))
+;  (check-equal?
+;   (project-forward conf "a")
+;   (set "b"))
+;  (check-equal?
+;   (project-forward conf "z")
+;   (set))
+;  (check-equal?
+;   (project-backward conf "b")
+;   (set "a"))
+;  (check-equal?
+;   (project-backward conf "z")
+;   (set)))
