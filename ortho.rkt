@@ -3,7 +3,7 @@
 (require rebellion/collection/multiset threading)
 (provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up)
 
-(struct node (name location) #:transparent
+(struct node (name location)
   #:methods
   gen:equal+hash
   [(define (equal-proc a b equal?-recur)

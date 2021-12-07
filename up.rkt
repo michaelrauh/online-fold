@@ -5,8 +5,10 @@
   (apply set (repo-set-subtract repo (find-forwards config repo ortho)) (repo-set-subtract repo (find-backwards config repo ortho))))
 
 (define (find-forwards config repo ortho)
-  (define potential-forwards (set-union (for/set ([origin-to-search (project-forward config (ortho-origin ortho))])
-                               (find-by-size-and-origin repo (ortho-size ortho) origin-to-search))))
+  (define potential-forwards (for/fold ([acc (set)])
+                                       ([origin-to-search (project-forward config (ortho-origin ortho))])
+                               (set-union acc (find-by-size-and-origin repo (ortho-size ortho) origin-to-search))))
+  
   (define corrs (make-corrs potential-forwards config ortho))
   (define better-corrs (ungroup potential-forwards corrs null))
   (define projects (filter (λ (corr) (check-projection config ortho corr)) better-corrs))
@@ -72,9 +74,9 @@
 
 (module+ test
   (require rackunit)
-  (define ortho-l (make-ortho "a" "b" "c" "d"))
+  (define ortho (make-ortho "a" "b" "c" "d"))
   (define ortho-r (make-ortho "e" "f" "g" "h"))
   (define config (make-config "a b. c d. a c. b d. e f. g h. e g. f h. a e. b f. c g. d h."))
   (define repo (make-repo (list ortho-r)))
-  (check-equal? (fold-up config repo ortho-l)
-                (list (ortho-zip-up ortho-l ortho-r (hash "a" "e" "b" "f" "c" "g" "d" "h")))))
+  (check-equal? (fold-up config repo ortho)
+                (list (ortho-zip-up ortho ortho-r (hash "a" "e" "b" "f" "c" "g" "d" "h")))))
