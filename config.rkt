@@ -70,7 +70,7 @@
 
 (define (phrases s)
   (for/fold ([d (hash)])
-            ([l (set-map (apply set-union (map make-phrases (clean-sentences s))) reverse)]) ; issue here - add subphrases too
+            ([l (set-map (apply set-union (map make-phrases (clean-sentences s))) reverse)])
     (dict-add d l)))
 
 (define (vocab s)
