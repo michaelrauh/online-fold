@@ -70,11 +70,21 @@
 
 (define (phrases s)
   (for/fold ([d (hash)])
-            ([l (map reverse (clean-sentences s))])
+            ([l (set-map (apply set-union (map make-phrases (clean-sentences s))) reverse)]) ; issue here - add subphrases too
     (dict-add d l)))
 
 (define (vocab s)
   (apply set-union (map list->set (clean-sentences s))))
+
+(define (tails raw)
+  (if (= 1 (length raw))
+      (set raw)
+      (set-union (set raw) (tails (cdr raw)))))
+
+(define (make-phrases raw)
+  (for/fold ([phrases (set)])
+            ([i (range 1 (add1 (length raw)))])
+    (set-union phrases (tails (take raw i)))))
 
 (module+ test
   (require rackunit)
@@ -84,8 +94,10 @@
    (config
     (hash "a" (set "b") "b" (set "e" "c"))
     (hash "b" (set "a") "c" (set "b") "e" (set "b"))
-    '#hash(("c" . #hash(("b" . #hash(("a" . #hash())))))
-           ("e" . #hash(("b" . #hash()))))
+     '#hash(("a" . #hash())
+          ("b" . #hash(("a" . #hash())))
+          ("c" . #hash(("b" . #hash(("a" . #hash())))))
+          ("e" . #hash(("b" . #hash()))))
     (set "e" "b" "c" "a")))
   (check-equal?
    (project-forward conf "a")

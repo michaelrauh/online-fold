@@ -1,5 +1,5 @@
 #lang racket
-(require "config.rkt" "ortho.rkt" "repo.rkt" racket/hash threading racket/trace)
+(require "config.rkt" "ortho.rkt" "repo.rkt" racket/hash threading)
 
 (struct correspondence (ortho mapping))
 (struct projection-pair (first second))
