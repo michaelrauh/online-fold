@@ -94,10 +94,10 @@
    (config
     (hash "a" (set "b") "b" (set "e" "c"))
     (hash "b" (set "a") "c" (set "b") "e" (set "b"))
-     '#hash(("a" . #hash())
-          ("b" . #hash(("a" . #hash())))
-          ("c" . #hash(("b" . #hash(("a" . #hash())))))
-          ("e" . #hash(("b" . #hash()))))
+    '#hash(("a" . #hash())
+           ("b" . #hash(("a" . #hash())))
+           ("c" . #hash(("b" . #hash(("a" . #hash())))))
+           ("e" . #hash(("b" . #hash()))))
     (set "e" "b" "c" "a")))
   (check-equal?
    (project-forward conf "a")
