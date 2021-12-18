@@ -1,6 +1,9 @@
 #lang racket
 (require "config.rkt" "ortho.rkt" "repo.rkt" racket/hash threading)
 
+(define (fold-over config repo ortho)
+  1)
+
 (module+ test
   (require rackunit)
   (define ortho (make-ortho "a" "b" "c" "d"))

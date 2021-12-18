@@ -92,11 +92,15 @@
              [right-set augmented])
     (set-union left-set right-set))))
 
+(define (ortho-zip-over l r mapping)
+  1)
+
 (module+ test
   (require rackunit)
   (define ortho1 (make-ortho "a" "b" "c" "d"))
   (define ortho2 (make-ortho "a" "c" "b" "d"))
   (define ortho3 (make-ortho "e" "f" "g" "h"))
+  (define ortho4 (make-ortho "b" "e" "d" "f"))
   (check-equal? ortho1 ortho2)
   (check-equal? (ortho-origin ortho1) "a")
   (check-equal? (ortho-size ortho1) (multiset 1 1))
@@ -107,4 +111,6 @@
   (check-equal? (ortho-location-translate (multiset "a" "b") (hash "a" "c" "b" "d")) (multiset "c" "d"))
   (check-equal? (apply set (ortho-location-pairs ortho1)) (apply set (list (cons "c" (multiset "c")) (cons "b" (multiset "b")) (cons "a" (multiset)) (cons "d" (multiset "c" "b")))))
   (check-equal? (ortho-zip-up ortho1 ortho3 (hash "a" "e" "b" "f" "c" "g" "d" "h"))
-                (ortho (list (set (node "a" (multiset))) (set (node "e" (multiset "e")) (node "b" (multiset "b")) (node "c" (multiset "c"))) (set (node "g" (multiset "e" "c")) (node "f" (multiset "e" "b")) (node "d" (multiset "c" "b"))) (set (node "h" (multiset "e" "c" "b")))))))
+                (ortho (list (set (node "a" (multiset))) (set (node "e" (multiset "e")) (node "b" (multiset "b")) (node "c" (multiset "c"))) (set (node "g" (multiset "e" "c")) (node "f" (multiset "e" "b")) (node "d" (multiset "c" "b"))) (set (node "h" (multiset "e" "c" "b"))))))
+  (check-equal? (ortho-zip-over ortho1 ortho4 (hash "e" "b"))
+                (ortho (list (set (node "a" (multiset))) (set (node "b" (multiset "b")) (node "c" (multiset "c"))) (set (node "e" (multiset "b" "b")) (node "d" (multiset "b" "c"))) (node "f" (multiset "b" "b" "c"))))))
