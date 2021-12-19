@@ -17,13 +17,13 @@
   (define config-4 (make-config "a b. c d. e f. a c e. b d f."))
   (define repo (make-repo (list ortho)))
   (check-equal? (fold-over config-1 repo ortho-1)
-                (set (ortho-zip-over ortho ortho-1 (hash "e" "b"))))
+                (set (ortho-zip-over ortho ortho-1 "b" (hash "e" "b" "d" "c"))))
   (check-equal? (fold-over config-2 repo ortho-2)
-                (set (ortho-zip-over ortho-2 ortho (hash "b" "a"))))
+                (set (ortho-zip-over ortho-2 ortho "a" (hash "b" "a" "c" "f"))))
   (check-equal? (fold-over config-3 repo ortho-3)
-                (set (ortho-zip-over ortho-3 ortho (hash "c" "a"))))
+                (set (ortho-zip-over ortho-3 ortho "a" (hash "c" "a" "b" "f"))))
   (check-equal? (fold-over config-4 repo ortho-4)
-                (set (ortho-zip-over ortho ortho-4 (hash "e" "c")))))
+                (set (ortho-zip-over ortho ortho-4 "c" (hash "e" "c" "d" "b")))))
 
 ; a b     b e       a b e
 ; c d     d f  =>   c d f

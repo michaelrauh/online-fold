@@ -1,7 +1,7 @@
 #lang racket
 
 (require rebellion/collection/multiset threading)
-(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse)
+(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over)
 
 (struct node (name location)
   #:methods
@@ -89,11 +89,45 @@
   (define translated (map-ortho-locations r (hash-reverse mapping)))
   (define augmented (shift-ortho (ortho-origin r) translated))
   (ortho (for/list ([left-set (append (ortho-data l) (list (set)))]
-             [right-set augmented])
-    (set-union left-set right-set))))
+                    [right-set augmented])
+           (set-union left-set right-set))))
 
-(define (ortho-zip-over l r mapping)
-  1)
+(define (ortho-zip-over l r combine-axis mapping)
+  (define nodes-at-end-of-axis (get-nodes-at-end r combine-axis))
+  (define shifted (map (λ (x) (add-to-node x combine-axis)) nodes-at-end-of-axis))
+  (define mapped (map (λ (x) (map-node-location x mapping)) shifted))
+  (add-nodes-to-ortho l mapped))
+
+(define (add-to-node n axis)
+  (node (node-name n) (multiset-add (node-location n) axis)))
+
+(define (add-nodes-to-ortho o nodes)
+  (ortho
+   (for/fold ([acc (ortho-data o)])
+             ([n nodes])
+     (if (= (length acc)
+            (multiset-size (node-location n)))
+         (append acc (list (set n)))
+         (list-update acc (multiset-size (node-location n)) (λ (x) (set-add x n)))))))
+
+(define (map-node-location n mapping)
+  (define location (node-location n))
+  (define name (node-name n))
+  (node name
+        (for/multiset ([x (in-multiset location)])
+          (hash-ref mapping x x))))
+          
+
+(define (get-nodes-at-end ortho axis)
+  (define-values (_ answer)
+    (for/fold ([number 0]
+               [nodes null])
+              ([p (ortho-location-pairs ortho)])
+      (cond
+        [(< (multiset-frequency (cdr p) axis) number) (values number nodes)]
+        [(= (multiset-frequency (cdr p) axis) number) (values number (cons (node (car p) (cdr p)) nodes))]
+        [else (values (multiset-frequency (cdr p) axis) (list (node (car p) (cdr p))))])))
+  answer)
 
 (module+ test
   (require rackunit)
@@ -112,5 +146,12 @@
   (check-equal? (apply set (ortho-location-pairs ortho1)) (apply set (list (cons "c" (multiset "c")) (cons "b" (multiset "b")) (cons "a" (multiset)) (cons "d" (multiset "c" "b")))))
   (check-equal? (ortho-zip-up ortho1 ortho3 (hash "a" "e" "b" "f" "c" "g" "d" "h"))
                 (ortho (list (set (node "a" (multiset))) (set (node "e" (multiset "e")) (node "b" (multiset "b")) (node "c" (multiset "c"))) (set (node "g" (multiset "e" "c")) (node "f" (multiset "e" "b")) (node "d" (multiset "c" "b"))) (set (node "h" (multiset "e" "c" "b"))))))
-  (check-equal? (ortho-zip-over ortho1 ortho4 (hash "e" "b"))
-                (ortho (list (set (node "a" (multiset))) (set (node "b" (multiset "b")) (node "c" (multiset "c"))) (set (node "e" (multiset "b" "b")) (node "d" (multiset "b" "c"))) (node "f" (multiset "b" "b" "c"))))))
+  (check-equal? (ortho-zip-over ortho1 ortho4 "b" (hash "e" "b" "d" "c"))
+                (ortho (list
+                        (set (node "a" (multiset)))
+                        (set (node "b" (multiset "b")) (node "c" (multiset "c")))
+                        (set (node "e" (multiset "b" "b")) (node "d" (multiset "b" "c")))
+                        (set (node "f" (multiset "b" "b" "c")))))))
+
+; a b     b e       a b e
+; c d     d f  =>   c d f
