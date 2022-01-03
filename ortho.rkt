@@ -1,7 +1,7 @@
 #lang racket
 
 (require rebellion/collection/multiset threading)
-(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over)
+(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs)
 
 (struct node (name location)
   #:methods
@@ -48,6 +48,9 @@
    (car)
    (set-first)
    (node-name)))
+
+(define (ortho-hops-name-location-pairs o) ; todo define
+  1)
 
 (define (make-ortho a b c d)
   (ortho 
@@ -97,6 +100,12 @@
   (define shifted (map (λ (x) (add-to-node x combine-axis)) nodes-at-end-of-axis))
   (define mapped (map (λ (x) (map-node-location x mapping)) shifted))
   (add-nodes-to-ortho l mapped))
+
+(define (ortho-shift-left o axis) ; todo implement and figure out what this returns
+  1)
+
+(define (ortho-shift-right o axis)
+  1)
 
 (define (add-to-node n axis)
   (node (node-name n) (multiset-add (node-location n) axis)))

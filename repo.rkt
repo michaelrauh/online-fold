@@ -2,7 +2,7 @@
 (require "ortho.rkt" racket/hash)
 (provide make-repo add-ortho find-by-size-and-origin find-by-size-and-hop repo-set-subtract)
 
-(struct repo (origins hops)#:transparent)
+(struct repo (origins hops))
 
 (define (make-repo [l (list)])
   (define empty-repo (repo (hash) (hash)))
