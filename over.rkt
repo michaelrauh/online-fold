@@ -19,21 +19,22 @@
   ; todo produce answer
   1)
 
+;todo given how often map is called here, it may make more sense to define a helper to do everything in one map call
 (define (make-mappings pair)
   (define source (shifted-pair-source pair))
   (define target (shifted-pair-target pair))
   (define source-axis (shifted-pair-source-axis pair))
   (define target-axis (shifted-pair-target-axis pair))
-  (define guesses (permutations (subtract-ortho-pair-by-name (ortho-hops-name-location-pairs target) target-axis)))
-  (define mappings (map (λ (guess) (pairs-to-mapping (subtract-ortho-pair-by-name (ortho-hops-name-location-pairs source) source-axis) guess)) guesses))
+  (define guesses (permutations (subtract-ortho-pair-by-location (ortho-hops-name-location-pairs target) (ortho-name-to-location target-axis))))
+  (define mappings (map (λ (guess) (pairs-to-mapping (subtract-ortho-pair-by-location (ortho-hops-name-location-pairs source) (ortho-name-to-location source-axis)) guess)) guesses))
   (define complete-mappings (map (λ (h) (hash-union h (hash target-axis source-axis) #:combine (λ (v1 v2) v1))) (filter identity mappings)))
   (map (λ (m) (mapping source target (shifted-pair-shifted-source pair) (shifted-pair-shifted-target pair) m source-axis))))
 
 (define (pairs-to-mapping source target)
-  1) ; todo #f if not found, otherwise hash from target to source
+  1) ; todo #f if not found, otherwise hash from target to source. Both args are name location pair lists. If the names match, map the locations.
 
-(define (subtract-ortho-pair-by-name pairs name)
-  1)
+(define (subtract-ortho-pair-by-location pairs location)
+  1) ; todo take a list of pairs containing name and then location, and a location, and remove the pair with that location
 
 (define (make-shifted-pair source mapping)
   (define target (shift-mapping-ortho mapping))

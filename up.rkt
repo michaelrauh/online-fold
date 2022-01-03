@@ -63,7 +63,7 @@
 
 (define (find-mapping hop-of-potential-forward from-hop-projection-pairs)
   (filter
-   (λ (x) (not (eq? #f x)))
+   identity
    (map
     (λ (potential) (build-mapping potential from-hop-projection-pairs (hash)))
     (permutations

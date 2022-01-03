@@ -1,7 +1,7 @@
 #lang racket
 
 (require rebellion/collection/multiset threading)
-(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs)
+(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs ortho-name-to-location)
 
 (struct node (name location)
   #:methods
@@ -25,6 +25,9 @@
      (+ (hash-recur (ortho-data a))))
    (define (hash2-proc a hash2-recur)
      (+ (hash2-recur (ortho-data a))))])
+
+(define (ortho-name-to-location name)
+  1) ; todo define make the axis name a location
 
 (define (ortho-get-names-in-buckets ortho)
   (map (λ (x) (list->set (set-map x node-name))) (ortho-data ortho)))
