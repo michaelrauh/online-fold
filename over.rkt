@@ -40,7 +40,7 @@
         #f)))
 
 (define (subtract-ortho-pair-by-location pairs location)
-  1) ; todo take a list of pairs containing name and then location, and a location, and remove the pair with that location
+  (filter (λ (pair) (not (eq? (cdr pair) location))) pairs))
 
 (define (make-shifted-pair source mapping)
   (define target (shift-mapping-ortho mapping))
