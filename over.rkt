@@ -31,7 +31,13 @@
   (map (λ (m) (mapping source target (shifted-pair-shifted-source pair) (shifted-pair-shifted-target pair) m source-axis))))
 
 (define (pairs-to-mapping source target)
-  1) ; todo #f if not found, otherwise hash from target to source. Both args are name location pair lists. If the names match, map the locations.
+  (for/fold ([acc (hash)])
+            ([source-pair source]
+             [target-pair target])
+    #:break (false? acc)
+    (if (eq? (car source-pair) (car target-pair))
+        (hash-union acc (hash (cdr target-pair) (cdr source-pair)) #:combine (λ (v1 v2) v1))
+        #f)))
 
 (define (subtract-ortho-pair-by-location pairs location)
   1) ; todo take a list of pairs containing name and then location, and a location, and remove the pair with that location
