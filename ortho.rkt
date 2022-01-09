@@ -1,7 +1,7 @@
 #lang racket
 
 (require rebellion/collection/multiset threading)
-(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs ortho-name-to-location ortho-get-name-by-location get-end-of-each-phrase ortho-map-location ortho-shift-location)
+(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs ortho-name-to-location get-end-of-each-phrase ortho-shift-location)
 
 (struct node (name location)
   #:methods
@@ -27,18 +27,32 @@
      (+ (hash2-recur (ortho-data a))))])
 
 (define (ortho-shift-location location axis)
-  1) ; todo define - shifting an empty location returns #f
-
-(define (ortho-map-location location corr) ; this is ortho-location-translate. deprecate this
-  1) ; todo define
+  (if (= 0 (multiset-size location))
+      #f
+      (multiset-remove location axis)))
 
 (define (get-end-of-each-phrase o axis)
-  1) ; todo define
+  (define nodes (ortho-location-pairs o))
+  (define axis-count (for/fold ([maximum 0])
+                               ([node nodes])
+                       (if (> (multiset-frequency (cdr node) axis)
+                              maximum)
+                           (multiset-frequency (cdr node) axis)
+                           maximum)))
+  (filter (λ (node) (= (multiset-frequency (cdr node) axis)
+                       axis-count)) nodes))
+  
 
 (define (ortho-name-to-location name)
   1) ; todo define
 
-(define (ortho-get-name-by-location o) ; this is ortho-name-at-location. deprecate this
+(define (ortho-hops-name-location-pairs o) ; todo define
+  1)
+
+(define (ortho-shift-left o axis) ; todo define
+  1)
+
+(define (ortho-shift-right o axis)
   1) ; todo define
 
 (define (ortho-get-names-in-buckets ortho)
@@ -63,9 +77,6 @@
    (car)
    (set-first)
    (node-name)))
-
-(define (ortho-hops-name-location-pairs o) ; todo define
-  1)
 
 (define (make-ortho a b c d)
   (ortho 
@@ -115,12 +126,6 @@
   (define shifted (map (λ (x) (add-to-node x combine-axis)) nodes-at-end-of-axis))
   (define mapped (map (λ (x) (map-node-location x mapping)) shifted))
   (add-nodes-to-ortho l mapped))
-
-(define (ortho-shift-left o axis) ; todo implement and figure out what this returns
-  1)
-
-(define (ortho-shift-right o axis)
-  1)
 
 (define (add-to-node n axis)
   (node (node-name n) (multiset-add (node-location n) axis)))
@@ -175,7 +180,9 @@
                         (set (node "a" (multiset)))
                         (set (node "b" (multiset "b")) (node "c" (multiset "c")))
                         (set (node "e" (multiset "b" "b")) (node "d" (multiset "b" "c")))
-                        (set (node "f" (multiset "b" "b" "c")))))))
-
-; a b     b e       a b e
-; c d     d f  =>   c d f
+                        (set (node "f" (multiset "b" "b" "c"))))))
+  (check-equal? (ortho-shift-location (multiset "a" "b" "b") "b")
+                (multiset "a" "b"))
+  (check-equal? (ortho-shift-location (multiset) "b") #f)
+  (check-equal? (get-end-of-each-phrase ortho1 "b")
+                (list (cons "b" (multiset "b")) (cons "d" (multiset "c" "b")))))

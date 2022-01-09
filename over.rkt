@@ -24,7 +24,7 @@
     (phrase-works config overlap-axis (mapping-correspondence mapping) (mapping-source mapping) phrase-end-name-and-location)))
 
 (define (phrase-works config overlap-axis correspondence ortho phrase-end-name-and-location)
-  (define starting-location (ortho-map-location (cdr phrase-end-name-and-location) correspondence))
+  (define starting-location (ortho-location-translate (cdr phrase-end-name-and-location) correspondence))
   (define desired-name (ortho-name-at-location ortho starting-location))
   (define trie-top (config-phrase-trie config))
   (define trie (config-phrase-hop config (car phrase-end-name-and-location)))
@@ -42,7 +42,7 @@
 (define (centers-overlap mapping)
   (for/and ([name-location-pair (ortho-location-pairs mapping-shifted-target)])
     (eq?
-     (ortho-get-name-by-location mapping-shifted-source (hash-ref mapping-correspondence (car name-location-pair) #f))
+     (ortho-name-at-location mapping-shifted-source (hash-ref mapping-correspondence (car name-location-pair) #f))
      (cdr name-location-pair))))
 
 (define (make-mappings pair)
