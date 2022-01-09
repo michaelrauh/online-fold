@@ -24,15 +24,16 @@
     (phrase-works config overlap-axis (mapping-correspondence mapping) (mapping-source mapping) phrase-end-name-and-location)))
 
 (define (phrase-works config overlap-axis correspondence ortho phrase-end-name-and-location)
-  (define starting-location (ortho-map-location (cdr phrase-end-name-and-location)))
+  (define starting-location (ortho-map-location (cdr phrase-end-name-and-location) correspondence))
   (define desired-name (ortho-name-at-location ortho starting-location))
+  (define trie-top (config-phrase-trie config))
   (define trie (config-phrase-hop config (car phrase-end-name-and-location)))
   (if (config-phrase-hop-contains-name trie desired-name)
-      (handle-deep-phrase config trie overlap-axis (ortho-shift-location starting-location overlap-axis))
+      (handle-deep-phrase config trie overlap-axis ortho (ortho-shift-location starting-location overlap-axis))
       #f))
 
-(define (handle-deep-phrase config trie overlap-axis location)
-  (if (eq? #t location)
+(define (handle-deep-phrase config trie overlap-axis ortho location)
+  (if (eq? #f location)
       #t
       (if (config-phrase-hop-contains-name trie (ortho-name-at-location ortho location))
           (handle-deep-phrase config (config-step-trie trie (ortho-name-at-location ortho location)) overlap-axis (ortho-shift-location location overlap-axis))
@@ -80,7 +81,7 @@
   (map (λ (h) (shift-mapping ortho axis h)) (ortho-hops ortho)))
 
 (define (find-backwards config repo ortho)
-  1)
+  1) ; todo define
 
 (module+ test
   (require rackunit)

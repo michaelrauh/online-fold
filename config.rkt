@@ -1,6 +1,6 @@
 #lang racket
 (require "cleaner.rkt" racket/hash)
-(provide make-config project-forward project-backward)
+(provide make-config project-forward project-backward config-phrase-trie config-phrase-hop config-phrase-hop-contains-name config-step-trie)
 
 (struct config (next prev phrase vocab)
   #:methods
@@ -20,6 +20,18 @@
         (hash2-recur (config-prev a))
         (hash2-recur (config-phrase a))
         (hash2-recur (config-vocab a))))])
+
+(define (config-phrase-hop-contains-name trie name)
+  1) ; todo define
+
+(define (config-phrase-hop config name)
+  1) ; todo define
+
+(define (config-phrase-trie config)
+  1) ; todo define
+
+(define (config-step-trie trie location)
+  1) ; todo define
 
 (define (project-forward c o) 
   (hash-ref (config-next c) o (set)))

@@ -1,7 +1,7 @@
 #lang racket
 
 (require rebellion/collection/multiset threading)
-(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs ortho-name-to-location ortho-get-name-by-location get-end-of-each-phrase)
+(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs ortho-name-to-location ortho-get-name-by-location get-end-of-each-phrase ortho-map-location ortho-shift-location)
 
 (struct node (name location)
   #:methods
@@ -26,6 +26,11 @@
    (define (hash2-proc a hash2-recur)
      (+ (hash2-recur (ortho-data a))))])
 
+(define (ortho-shift-location location axis)
+  1) ; todo define - shifting an empty location returns #f
+
+(define (ortho-map-location location corr) ; this is ortho-location-translate. deprecate this
+  1) ; todo define
 
 (define (get-end-of-each-phrase o axis)
   1) ; todo define
@@ -33,7 +38,7 @@
 (define (ortho-name-to-location name)
   1) ; todo define
 
-(define (ortho-get-name-by-location o)
+(define (ortho-get-name-by-location o) ; this is ortho-name-at-location. deprecate this
   1) ; todo define
 
 (define (ortho-get-names-in-buckets ortho)
