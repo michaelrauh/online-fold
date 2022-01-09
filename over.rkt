@@ -13,13 +13,37 @@
   (define potentials (set-map (ortho-hops ortho) (λ (origin) (ortho-and-axis (find-by-size-and-origin repo (ortho-size ortho) origin) origin))))
   (define potential-shift-mappings (map (λ (p) (make-ortho-axis-mapping p)) potentials))
   (define shifted-pairs (map (λ (mapping) (make-shifted-pair ortho mapping)) potential-shift-mappings))
-  (define mappings (map (λ (pair) (make-mappings pair)) shifted-pairs))
-  ; todo ungroup - mappings will produce a list of lists. In this version mapping will be duplicated for each so we can just flatten
-  ; todo filter based upon centers overlap rule - this will be easier with shifted orthos
-  ; todo produce answer
-  1)
+  (define mappings (flatten (map (λ (pair) (make-mappings pair)) shifted-pairs))) 
+  (define with-overlapping-centers (filter centers-overlap mappings))
+  (define winners (filter ((curry phrases-work) config) with-overlapping-centers))
+  (map (λ (winner) (ortho-zip-over (mapping-source winner) (mapping-target winner) (mapping-shift-axis winner) (mapping-correspondence winner))) winners))
 
-;todo given how often map is called here, it may make more sense to define a helper to do everything in one map call
+(define (phrases-work config mapping)
+  (define overlap-axis (mapping-shift-axis mapping))
+  (for/and ([phrase-end-name-and-location (get-end-of-each-phrase (mapping-target mapping) (hash-ref (mapping-correspondence mapping) overlap-axis))])
+    (phrase-works config overlap-axis (mapping-correspondence mapping) (mapping-source mapping) phrase-end-name-and-location)))
+
+(define (phrase-works config overlap-axis correspondence ortho phrase-end-name-and-location)
+  (define starting-location (ortho-map-location (cdr phrase-end-name-and-location)))
+  (define desired-name (ortho-name-at-location ortho starting-location))
+  (define trie (config-phrase-hop config (car phrase-end-name-and-location)))
+  (if (config-phrase-hop-contains-name trie desired-name)
+      (handle-deep-phrase config trie overlap-axis (ortho-shift-location starting-location overlap-axis))
+      #f))
+
+(define (handle-deep-phrase config trie overlap-axis location)
+  (if (eq? #t location)
+      #t
+      (if (config-phrase-hop-contains-name trie (ortho-name-at-location ortho location))
+          (handle-deep-phrase config (config-step-trie trie (ortho-name-at-location ortho location)) overlap-axis (ortho-shift-location location overlap-axis))
+          #f)))
+
+(define (centers-overlap mapping)
+  (for/and ([name-location-pair (ortho-location-pairs mapping-shifted-target)])
+    (eq?
+     (ortho-get-name-by-location mapping-shifted-source (hash-ref mapping-correspondence (car name-location-pair) #f))
+     (cdr name-location-pair))))
+
 (define (make-mappings pair)
   (define source (shifted-pair-source pair))
   (define target (shifted-pair-target pair))
@@ -115,3 +139,25 @@
 
 ;f(e)           f(f)
 ;h(ce)          h(df)
+
+
+
+  ;Phrases check:
+
+;a() b(b)       b() i(i) 
+;c(c) d(bc)            d(d) j(di)
+
+;e(e) f(be)             f(f) k(fi) 
+;g(ce) h(bce)        h(df) m(dfi)
+
+
+;1. Get the overlap axis. In this case it is b, and mapping is {b=i, c=d, e=f, g=h}
+;2. Look up the axis that corresponds to the overlap axis. In this case it is i
+;3. Find the max number of is
+;4. Find all nodes with the max number of is
+;5. For each node:
+;    1. map the location over to the source
+;    2. do a hop and see if that name is in the phrase trie
+;    3. if it is not, fail
+;    4. if it is, take the location from the last hop, subtract off one instance of the overlap axis, look up the corresponding name, and hop on that
+;    5. see if the hop lead to something. If not, fail. If so, return to step 4

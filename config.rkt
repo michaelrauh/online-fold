@@ -85,7 +85,7 @@
   (for/fold ([phrases (set)])
             ([i (range 1 (add1 (length raw)))])
     (set-union phrases (tails (take raw i)))))
-
+ 
 (module+ test
   (require rackunit)
   (define conf (make-config "a b c. b e"))
