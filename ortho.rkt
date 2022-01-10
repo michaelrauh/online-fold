@@ -1,9 +1,9 @@
 #lang racket
 
 (require rebellion/collection/multiset threading)
-(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs ortho-name-to-location get-end-of-each-phrase ortho-shift-location)
+(provide make-ortho ortho-size ortho-origin ortho-hops ortho-location-pairs ortho-location-translate ortho-name-at-location ortho-get-names-in-buckets ortho-zip-up hash-reverse ortho-zip-over ortho-shift-left ortho-shift-right ortho-hops-name-location-pairs ortho-name-to-location get-end-of-each-phrase ortho-shift-location ortho-singleton-location-to-name)
 
-(struct node (name location)
+(struct node (name location)#:transparent
   #:methods
   gen:equal+hash
   [(define (equal-proc a b equal?-recur)
@@ -16,7 +16,7 @@
      (+ (hash2-recur (node-name a))
         (hash2-recur (node-location a))))])
 
-(struct ortho (data)
+(struct ortho (data) #:transparent
   #:methods
   gen:equal+hash
   [(define (equal-proc a b equal?-recur)
@@ -25,6 +25,9 @@
      (+ (hash-recur (ortho-data a))))
    (define (hash2-proc a hash2-recur)
      (+ (hash2-recur (ortho-data a))))])
+
+(define (ortho-singleton-location-to-name loc)
+  (car (multiset->list loc)))
 
 (define (ortho-shift-location location axis)
   (if (= 0 (multiset-size location))
@@ -208,4 +211,5 @@
   (check-equal? (ortho-name-to-location "a") (multiset "a"))
   (check-equal? (apply set (ortho-hops-name-location-pairs ortho1)) (set (cons "b" (multiset "b")) (cons "c" (multiset "c"))))
   (check-equal? (ortho-shift-left ortho1 "b") (ortho (list (set (node "b" (multiset))) (set (node "d" (multiset "c"))))))
-  (check-equal? (ortho-shift-right ortho1 "b") (ortho (list (set (node "a" (multiset))) (set (node "c" (multiset "c")))))))
+  (check-equal? (ortho-shift-right ortho1 "b") (ortho (list (set (node "a" (multiset))) (set (node "c" (multiset "c"))))))
+  (check-equal? (ortho-singleton-location-to-name (multiset "b")) "b"))
