@@ -44,16 +44,35 @@
   
 
 (define (ortho-name-to-location name)
-  1) ; todo define
+  (multiset name))
 
-(define (ortho-hops-name-location-pairs o) ; todo define
-  1)
+(define (ortho-hops-name-location-pairs o)
+  (set-map (car (cdr (ortho-data o))) (λ (n) (cons (node-name n) (node-location n)))))
 
-(define (ortho-shift-left o axis) ; todo define
-  1)
+(define (ortho-shift-left o axis)
+  (define cleaned (for/list ([node-set (ortho-data o)])
+                    (filter (λ (n) (positive? (multiset-frequency (node-location n) axis))) (set->list node-set))))
+  (define shifted (for/list ([node-set cleaned])
+                    (apply set (set-map node-set (λ (n) (node (node-name n) (multiset-remove (node-location n) axis)))))))
+  (ortho (cdr shifted)))
 
 (define (ortho-shift-right o axis)
-  1) ; todo define
+  (define nodes (ortho-location-pairs o))
+  (define axis-count (for/fold ([maximum 0])
+                               ([node nodes])
+                       (if (> (multiset-frequency (cdr node) axis)
+                              maximum)
+                           (multiset-frequency (cdr node) axis)
+                           maximum)))
+  (define result-pairs (filter (λ (node) (not (= (multiset-frequency (cdr node) axis)
+                       axis-count))) nodes))
+  (define almost-ortho (for/fold ([ortho (build-list (length (ortho-data o)) (λ (_) (set)))])
+            ([name-and-location result-pairs])
+    (list-update ortho (multiset-size (cdr name-and-location)) (λ (s) (set-add s (node (car name-and-location) (cdr name-and-location)))))))
+  (define ans (if (set-empty? (last almost-ortho))
+                  (drop-right almost-ortho 1)
+                  almost-ortho))
+  (ortho ans))
 
 (define (ortho-get-names-in-buckets ortho)
   (map (λ (x) (list->set (set-map x node-name))) (ortho-data ortho)))
@@ -185,4 +204,8 @@
                 (multiset "a" "b"))
   (check-equal? (ortho-shift-location (multiset) "b") #f)
   (check-equal? (get-end-of-each-phrase ortho1 "b")
-                (list (cons "b" (multiset "b")) (cons "d" (multiset "c" "b")))))
+                (list (cons "b" (multiset "b")) (cons "d" (multiset "c" "b"))))
+  (check-equal? (ortho-name-to-location "a") (multiset "a"))
+  (check-equal? (apply set (ortho-hops-name-location-pairs ortho1)) (set (cons "b" (multiset "b")) (cons "c" (multiset "c"))))
+  (check-equal? (ortho-shift-left ortho1 "b") (ortho (list (set (node "b" (multiset))) (set (node "d" (multiset "c"))))))
+  (check-equal? (ortho-shift-right ortho1 "b") (ortho (list (set (node "a" (multiset))) (set (node "c" (multiset "c")))))))
