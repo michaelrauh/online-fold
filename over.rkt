@@ -26,7 +26,6 @@
 (define (phrase-works config overlap-axis correspondence ortho phrase-end-name-and-location)
   (define starting-location (ortho-location-translate (cdr phrase-end-name-and-location) correspondence))
   (define desired-name (ortho-name-at-location ortho starting-location))
-  (define trie-top (config-phrase-trie config))
   (define trie (config-phrase-hop config (car phrase-end-name-and-location)))
   (if (config-phrase-hop-contains-name trie desired-name)
       (handle-deep-phrase config trie overlap-axis ortho (ortho-shift-location starting-location overlap-axis))
