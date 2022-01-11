@@ -4,7 +4,7 @@
 (struct ortho-and-axis (ortho axis))
 (struct shift-mapping (ortho source-axis target-axis))
 (struct shifted-pair (source target shifted-source shifted-target source-axis target-axis))
-(struct mapping (source target shifted-source shifted-target correspondence shift-axis))
+(struct mapping (source target shifted-source shifted-target correspondence shift-axis)#:transparent)
 
 (define (fold-over config repo ortho)
   (apply set (append (repo-set-subtract repo (find-forwards config repo ortho)) (repo-set-subtract repo (find-backwards config repo ortho)))))
@@ -39,11 +39,12 @@
           #f)))
 
 (define (centers-overlap mapping)
-  (for/and ([name-location-pair (ortho-location-pairs mapping-shifted-target)])
-    (eq?
-     (ortho-name-at-location mapping-shifted-source (hash-ref mapping-correspondence (car name-location-pair) #f))
-     (cdr name-location-pair))))
-
+  (define source (mapping-shifted-source mapping))
+  (define corr (mapping-correspondence mapping))
+  (for/and ([target-name-location-pair (ortho-location-pairs (mapping-shifted-target mapping))])
+    (equal? (car target-name-location-pair)
+            (ortho-name-at-location source (ortho-location-translate (cdr target-name-location-pair) corr)))))
+    
 (define (make-mappings pair)
   (define source (shifted-pair-source pair))
   (define target (shifted-pair-target pair))
@@ -55,9 +56,8 @@
   (define all-target-axes (ortho-hops-name-location-pairs shifted-target))
   (define all-target-axes-but-shift-axis (subtract-ortho-pair-by-location all-target-axes target-axis-location))
   (define guesses (permutations all-target-axes-but-shift-axis))
-  (define mappings (map (λ (guess) (pairs-to-mapping (subtract-ortho-pair-by-location (ortho-hops-name-location-pairs shifted-source) (ortho-name-to-location source-axis)) guess)) guesses)) ; todo there seems to be an issue here
+  (define mappings (map (λ (guess) (pairs-to-mapping (subtract-ortho-pair-by-location (ortho-hops-name-location-pairs shifted-source) (ortho-name-to-location source-axis)) guess)) guesses))
   (define complete-mappings (map (λ (h) (hash-union h (hash target-axis source-axis) #:combine (λ (v1 v2) v1))) (filter identity mappings)))
-  (displayln complete-mappings)
   (map (λ (m) (mapping source target (shifted-pair-shifted-source pair) (shifted-pair-shifted-target pair) m source-axis)) complete-mappings))
 
 (define (pairs-to-mapping source target)
