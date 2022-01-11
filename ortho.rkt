@@ -30,7 +30,7 @@
   (car (multiset->list loc)))
 
 (define (ortho-shift-location location axis)
-  (if (= 0 (multiset-size location))
+  (if (zero? (multiset-frequency location axis))
       #f
       (multiset-remove location axis)))
 

@@ -20,7 +20,8 @@
 
 (define (phrases-work config mapping)
   (define overlap-axis (mapping-shift-axis mapping))
-  (for/and ([phrase-end-name-and-location (get-end-of-each-phrase (mapping-target mapping) (hash-ref (mapping-correspondence mapping) overlap-axis))])
+  (define corr (mapping-correspondence mapping))
+  (for/and ([phrase-end-name-and-location (get-end-of-each-phrase (mapping-target mapping) (hash-ref (hash-reverse corr) overlap-axis))])
     (phrase-works config overlap-axis (mapping-correspondence mapping) (mapping-source mapping) phrase-end-name-and-location)))
 
 (define (phrase-works config overlap-axis correspondence ortho phrase-end-name-and-location)
@@ -28,14 +29,14 @@
   (define desired-name (ortho-name-at-location ortho starting-location))
   (define trie (config-phrase-hop config (car phrase-end-name-and-location)))
   (if (config-phrase-hop-contains-name trie desired-name)
-      (handle-deep-phrase config trie overlap-axis ortho (ortho-shift-location starting-location overlap-axis))
+      (handle-deep-phrase config trie overlap-axis ortho starting-location)
       #f))
 
 (define (handle-deep-phrase config trie overlap-axis ortho location)
   (if (eq? #f location)
       #t
       (if (config-phrase-hop-contains-name trie (ortho-name-at-location ortho location))
-          (handle-deep-phrase config (config-step-trie trie (ortho-name-at-location ortho location)) overlap-axis (ortho-shift-location location overlap-axis))
+          (handle-deep-phrase config (config-step-trie trie (ortho-name-at-location ortho location)) overlap-axis ortho (ortho-shift-location location overlap-axis))
           #f)))
 
 (define (centers-overlap mapping)
@@ -109,6 +110,7 @@
   ; (check-equal? (fold-over config-4 repo ortho-4)
   ;        (set (ortho-zip-over ortho ortho-4 "c" (hash "e" "c" "d" "b"))))) ; todo add this back for backward
   )
+
 
 ; a b     b e       a b e
 ; c d     d f  =>   c d f
