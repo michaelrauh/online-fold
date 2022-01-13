@@ -105,8 +105,8 @@
   ;              (set (ortho-zip-over ortho ortho-1 "b" (hash "e" "b" "d" "c"))))) ; todo add this back for backward
   (check-equal? (fold-over config-2 repo ortho-2)
                 (set (ortho-zip-over ortho-2 ortho "a" (hash "b" "a" "c" "f"))))
-  ;(check-equal? (fold-over config-3 repo ortho-3)
-  ;              (set (ortho-zip-over ortho-3 ortho "a" (hash "c" "a" "b" "f")))) ; todo add this back for forward
+  (check-equal? (fold-over config-3 repo ortho-3)
+                (set (ortho-zip-over ortho-3 ortho "a" (hash "c" "a" "b" "f"))))
   ; (check-equal? (fold-over config-4 repo ortho-4)
   ;        (set (ortho-zip-over ortho ortho-4 "c" (hash "e" "c" "d" "b"))))) ; todo add this back for backward
   )
